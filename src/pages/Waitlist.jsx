@@ -2,8 +2,6 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 export default function Waitlist() {
-  const [email, setEmail] = useState("");
-  const [isSubmitted, setIsSubmitted] = useState(false);
   const [waitlistCount, setWaitlistCount] = useState(2847);
   const [animatedCount, setAnimatedCount] = useState(0);
   const [currentFeature, setCurrentFeature] = useState(0);
@@ -17,6 +15,75 @@ export default function Waitlist() {
   ];
 
   useEffect(() => {
+    // Add Prefinery initialization script
+    const initScript = document.createElement('script');
+    initScript.innerHTML = `
+      prefinery = window.prefinery || function() {
+        (window.prefinery.q = window.prefinery.q || []).push(arguments);
+      };
+    `;
+    document.head.appendChild(initScript);
+    
+    // Load the widget script
+    const widgetScript = document.createElement('script');
+    widgetScript.src = 'https://widget.prefinery.com/widget/v2/httxquc8.js';
+    widgetScript.defer = true;
+    widgetScript.onload = () => {
+      console.log('Prefinery widget script loaded');
+    };
+    document.head.appendChild(widgetScript);
+
+    // Add custom styles for Prefinery widget
+    const style = document.createElement('style');
+    style.textContent = `
+      .prefinery-widget-container input {
+        background: rgba(255, 255, 255, 0.05) !important;
+        border: 2px solid rgba(255, 255, 255, 0.2) !important;
+        border-radius: 16px !important;
+        color: white !important;
+        padding: 16px 20px !important;
+        font-size: 18px !important;
+        backdrop-filter: blur(10px) !important;
+        transition: all 0.3s ease !important;
+      }
+      
+      .prefinery-widget-container input:focus {
+        border-color: rgba(59, 130, 246, 0.5) !important;
+        box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2) !important;
+        outline: none !important;
+      }
+      
+      .prefinery-widget-container input::placeholder {
+        color: rgba(156, 163, 175, 1) !important;
+      }
+      
+      .prefinery-widget-container button {
+        background: linear-gradient(to right, #3b82f6, #8b5cf6, #ec4899) !important;
+        border: 2px solid rgba(255, 255, 255, 0.2) !important;
+        border-radius: 16px !important;
+        color: white !important;
+        font-weight: 800 !important;
+        font-size: 18px !important;
+        padding: 16px 32px !important;
+        transition: all 0.3s ease !important;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
+      }
+      
+      .prefinery-widget-container button:hover {
+        background: linear-gradient(to right, #2563eb, #7c3aed, #db2777) !important;
+        transform: scale(1.05) !important;
+      }
+      
+      .prefinery-widget-container .prefinery-form {
+        background: transparent !important;
+      }
+      
+      .prefinery-widget-container * {
+        font-family: inherit !important;
+      }
+    `;
+    document.head.appendChild(style);
+
     // Animate counter on load
     const timer = setInterval(() => {
       setAnimatedCount(prev => {
@@ -38,15 +105,6 @@ export default function Waitlist() {
       clearInterval(featureTimer);
     };
   }, [waitlistCount]);
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!email) return;
-    setIsSubmitted(true);
-    setWaitlistCount(prev => prev + 1);
-    // Optionally navigate after a delay
-    setTimeout(() => navigate("/success"), 2000);
-  };
 
   return (
     <div className="min-h-screen w-full bg-black text-white relative overflow-hidden flex flex-col">
@@ -210,12 +268,10 @@ export default function Waitlist() {
                   <span className="text-2xl sm:text-3xl">🚀</span>
                 </div>
                 <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black mb-3 sm:mb-4 bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
-                  {isSubmitted ? "Welcome Aboard! 🎉" : "Join the Elite Waitlist"}
+                  Join the Elite Waitlist
                 </h2>
                 <p className="text-gray-400 text-lg sm:text-xl lg:text-2xl leading-relaxed px-2">
-                  {isSubmitted 
-                    ? "You're officially in! Get ready for the ultimate word gaming experience."
-                    : "Secure your spot in the most anticipated onchain word game"}
+                  Secure your spot in the most anticipated onchain word game
                 </p>
                 
                 {/* Live Counter - Enhanced */}
@@ -231,55 +287,36 @@ export default function Waitlist() {
                 </div>
               </div>
             
-            {!isSubmitted ? (
-              <form onSubmit={handleSubmit} className="space-y-6 sm:space-y-8">
-                <div className="relative group">
-                  <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-2xl sm:rounded-3xl blur opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            {/* Temporary fallback form while debugging Prefinery */}
+            <form className="space-y-6 sm:space-y-8">
+              <div className="relative group">
+                <div className="absolute -inset-1 sm:-inset-2 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-2xl sm:rounded-3xl blur opacity-50 transition-opacity duration-300"></div>
+                <div className="relative bg-white/5 backdrop-blur-sm border-2 border-white/20 rounded-2xl sm:rounded-3xl p-4 sm:p-6">
                   <input
                     type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
                     placeholder="Enter your email address"
-                    className="relative w-full px-4 py-4 sm:px-8 sm:py-6 rounded-2xl sm:rounded-3xl bg-white/5 border-2 border-white/20 text-white placeholder-gray-400 focus:outline-none focus:ring-4 focus:ring-blue-400/50 focus:border-blue-400/50 backdrop-blur-sm transition-all duration-300 text-lg sm:text-xl"
+                    className="w-full px-4 py-4 sm:px-6 sm:py-4 rounded-xl bg-white/10 border-2 border-white/20 text-white placeholder-gray-400 focus:outline-none focus:ring-4 focus:ring-blue-400/50 focus:border-blue-400/50 backdrop-blur-sm transition-all duration-300 text-lg"
                     required
                   />
-                  <div className="absolute right-4 sm:right-6 top-1/2 transform -translate-y-1/2 text-gray-400 text-xl sm:text-2xl">
-                    ✉️
-                  </div>
-                </div>
-                
-                <button
-                  type="submit"
-                  className="relative w-full py-4 sm:py-6 rounded-2xl sm:rounded-3xl bg-gradient-to-r from-blue-500 via-purple-600 to-pink-600 hover:from-blue-600 hover:via-purple-700 hover:to-pink-700 font-black text-lg sm:text-2xl transition-all duration-300 transform hover:scale-105 shadow-2xl border-2 border-white/20 overflow-hidden group"
-                >
-                  <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
-                  <span className="relative">🚀 Secure My Spot</span>
-                </button>
-                
-                <div className="text-center text-base sm:text-lg text-gray-400">
-                  <p>🔒 We respect your privacy. No spam, ever.</p>
-                </div>
-              </form>
-            ) : (
-              <div className="text-center space-y-6 sm:space-y-8">
-                <div className="relative">
-                  <div className="absolute inset-0 bg-green-500/20 rounded-full blur-xl sm:blur-2xl"></div>
-                  <div className="relative w-20 h-20 sm:w-24 sm:h-24 bg-gradient-to-r from-green-400 to-emerald-500 rounded-full flex items-center justify-center mx-auto shadow-2xl">
-                    <span className="text-3xl sm:text-4xl animate-bounce">✓</span>
-                  </div>
-                </div>
-                <div className="space-y-2 sm:space-y-3">
-                  <p className="text-green-400 font-bold text-xl sm:text-2xl">Successfully Registered!</p>
-                  <p className="text-gray-400 text-base sm:text-lg">Check your email for confirmation</p>
-                </div>
-                
-                <div className="p-4 sm:p-6 bg-green-500/10 rounded-2xl sm:rounded-3xl border-2 border-green-500/20">
-                  <p className="text-base sm:text-lg text-green-300">
-                    🎯 You're now #<span className="font-bold text-lg sm:text-xl">{waitlistCount.toLocaleString()}</span> in line
-                  </p>
+                  <button
+                    type="submit"
+                    className="w-full mt-4 py-4 rounded-xl bg-gradient-to-r from-blue-500 via-purple-600 to-pink-600 hover:from-blue-600 hover:via-purple-700 hover:to-pink-700 font-black text-lg transition-all duration-300 transform hover:scale-105 shadow-xl border-2 border-white/20"
+                  >
+                    🚀 Join Waitlist
+                  </button>
+                  
+                  {/* Prefinery Widget Container - Hidden for now */}
+                  <div 
+                    data-prefinery-embed="httxquc8" 
+                    style={{ display: 'none' }}
+                  ></div>
                 </div>
               </div>
-            )}
+              
+              <div className="text-center text-base sm:text-lg text-gray-400">
+                <p>🔒 We respect your privacy. No spam, ever.</p>
+              </div>
+            </form>
             </div>
           </div>
         </div>
