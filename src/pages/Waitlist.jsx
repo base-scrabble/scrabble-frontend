@@ -80,83 +80,84 @@ export default function Waitlist() {
       </div>
 
       {/* Navigation */}
-      <nav className="relative z-10 w-full max-w-7xl mx-auto flex justify-between items-center px-6 py-6">
-        <div className="flex items-center space-x-4">
-          <div className="w-12 h-12 bg-gradient-to-br from-blue-400 via-purple-500 to-pink-500 rounded-xl flex items-center justify-center shadow-xl">
-            <span className="text-white font-black text-xl">S</span>
+      <nav className="relative z-10 w-full max-w-7xl mx-auto flex justify-between items-center px-4 sm:px-6 py-4 sm:py-6">
+        <div className="flex items-center space-x-2 sm:space-x-4">
+          <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-blue-400 via-purple-500 to-pink-500 rounded-xl flex items-center justify-center shadow-xl">
+            <span className="text-white font-black text-lg sm:text-xl">S</span>
           </div>
-          <div>
-            <div className="font-black text-2xl bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+          <div className="min-w-0">
+            <div className="font-black text-lg sm:text-2xl bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent truncate">
               BaseScrabble
             </div>
-            <div className="text-sm text-gray-400 -mt-1">Onchain Word Gaming</div>
+            <div className="text-xs sm:text-sm text-gray-400 -mt-1 hidden sm:block">Onchain Word Gaming</div>
           </div>
         </div>
         
-        <div className="flex items-center space-x-8">
-          <div className="flex items-center space-x-3 bg-green-500/20 px-4 py-2 rounded-full border border-green-500/30 backdrop-blur-sm">
+        <div className="flex items-center space-x-2 sm:space-x-8">
+          <div className="hidden sm:flex items-center space-x-3 bg-green-500/20 px-4 py-2 rounded-full border border-green-500/30 backdrop-blur-sm">
             <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
             <span className="text-sm text-green-300 font-semibold">Live Beta</span>
           </div>
-          <button className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 px-8 py-3 rounded-xl font-bold text-lg transition-all duration-300 transform hover:scale-105 shadow-xl border border-white/10">
-            Connect Wallet
+          <button className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 px-3 py-2 sm:px-8 sm:py-3 rounded-xl font-bold text-sm sm:text-lg transition-all duration-300 transform hover:scale-105 shadow-xl border border-white/10">
+            <span className="hidden sm:inline">Connect Wallet</span>
+            <span className="sm:hidden">Connect</span>
           </button>
         </div>
       </nav>
 
       {/* Hero Section */}
-      <div className="relative z-10 flex-1 flex flex-col items-center justify-center w-full max-w-7xl mx-auto px-6 py-20 text-center">
+      <div className="relative z-10 flex-1 flex flex-col items-center justify-center w-full max-w-7xl mx-auto px-4 sm:px-6 py-12 sm:py-20 text-center">
         {/* Floating Board with Advanced Effects */}
-        <div className="mb-16 relative group">
-          <div className="absolute -inset-8 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 rounded-3xl blur-3xl opacity-30 group-hover:opacity-50 transition-opacity duration-700 animate-pulse"></div>
-          <div className="absolute -inset-4 bg-gradient-to-r from-cyan-400 to-blue-500 rounded-2xl blur-2xl opacity-20 animate-pulse animation-delay-1000"></div>
-          <div className="relative transform hover:scale-110 transition-transform duration-500">
+        <div className="mb-8 sm:mb-16 relative group">
+          <div className="absolute -inset-4 sm:-inset-8 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 rounded-3xl blur-2xl sm:blur-3xl opacity-30 group-hover:opacity-50 transition-opacity duration-700 animate-pulse"></div>
+          <div className="absolute -inset-2 sm:-inset-4 bg-gradient-to-r from-cyan-400 to-blue-500 rounded-2xl blur-xl sm:blur-2xl opacity-20 animate-pulse animation-delay-1000"></div>
+          <div className="relative transform hover:scale-105 sm:hover:scale-110 transition-transform duration-500">
             <img
               src="/scrabble-board.png"
               alt="Scrabble Preview"
-              className="relative w-64 md:w-80 lg:w-96 rounded-3xl shadow-2xl mx-auto border-2 border-white/30 backdrop-blur-sm"
+              className="relative w-48 sm:w-64 md:w-80 lg:w-96 rounded-2xl sm:rounded-3xl shadow-2xl mx-auto border-2 border-white/30 backdrop-blur-sm"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent rounded-3xl"></div>
+            <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent rounded-2xl sm:rounded-3xl"></div>
           </div>
           
-          {/* Floating Elements */}
-          <div className="absolute -top-6 -right-6 w-12 h-12 bg-yellow-400 rounded-full animate-bounce opacity-80 shadow-2xl flex items-center justify-center">
+          {/* Floating Elements - Hidden on mobile for cleaner look */}
+          <div className="hidden sm:block absolute -top-6 -right-6 w-12 h-12 bg-yellow-400 rounded-full animate-bounce opacity-80 shadow-2xl flex items-center justify-center">
             <span className="text-2xl">⚡</span>
           </div>
-          <div className="absolute -bottom-6 -left-6 w-10 h-10 bg-green-400 rounded-full animate-bounce animation-delay-500 opacity-80 shadow-2xl flex items-center justify-center">
+          <div className="hidden sm:block absolute -bottom-6 -left-6 w-10 h-10 bg-green-400 rounded-full animate-bounce animation-delay-500 opacity-80 shadow-2xl flex items-center justify-center">
             <span className="text-xl">💎</span>
           </div>
-          <div className="absolute top-1/2 -right-12 w-8 h-8 bg-purple-400 rounded-full animate-pulse opacity-60 flex items-center justify-center">
+          <div className="hidden sm:block absolute top-1/2 -right-12 w-8 h-8 bg-purple-400 rounded-full animate-pulse opacity-60 flex items-center justify-center">
             <span className="text-lg">🏆</span>
           </div>
         </div>
         
-        <div className="space-y-12 w-full max-w-6xl mx-auto">
+        <div className="space-y-6 sm:space-y-12 w-full max-w-6xl mx-auto">
           {/* Enhanced Title */}
           <div className="relative">
-            <h1 className="text-6xl md:text-8xl lg:text-9xl font-black leading-tight">
+            <h1 className="text-4xl sm:text-6xl md:text-8xl lg:text-9xl font-black leading-tight">
               <span className="bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent block">
                 The Future of
               </span>
-              <span className="bg-gradient-to-r from-white via-gray-100 to-white bg-clip-text text-transparent drop-shadow-2xl block mt-4">
+              <span className="bg-gradient-to-r from-white via-gray-100 to-white bg-clip-text text-transparent drop-shadow-2xl block mt-2 sm:mt-4">
                 Word Gaming
               </span>
             </h1>
-            <div className="absolute -inset-8 bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-pink-500/10 blur-3xl -z-10"></div>
+            <div className="absolute -inset-4 sm:-inset-8 bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-pink-500/10 blur-2xl sm:blur-3xl -z-10"></div>
           </div>
           
           {/* Enhanced Description */}
           <div className="relative max-w-4xl mx-auto">
-            <p className="text-2xl md:text-3xl lg:text-4xl text-gray-300 leading-relaxed font-light">
+            <p className="text-lg sm:text-2xl md:text-3xl lg:text-4xl text-gray-300 leading-relaxed font-light px-4">
               Play competitive Scrabble on <span className="text-blue-400 font-bold">Base chain</span>. 
-              <br className="hidden md:block" />
+              <br className="hidden sm:block" />
               Stake, compete, and earn rewards in the ultimate 
               <span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent font-bold"> onchain word battle</span>.
             </p>
           </div>
           
           {/* Enhanced Feature Pills */}
-          <div className="flex flex-wrap justify-center gap-6 mt-16">
+          <div className="flex flex-wrap justify-center gap-3 sm:gap-6 mt-8 sm:mt-16 px-4">
             {[
               { icon: "🏆", text: "Tournament Mode", color: "from-blue-500 to-cyan-500" },
               { icon: "💰", text: "Stake & Earn", color: "from-green-500 to-emerald-500" },
@@ -166,115 +167,115 @@ export default function Waitlist() {
                 key={index}
                 className="group relative overflow-hidden"
               >
-                <div className={`absolute inset-0 bg-gradient-to-r ${feature.color} opacity-20 blur-xl group-hover:opacity-40 transition-opacity duration-300`}></div>
-                <div className="relative bg-white/10 backdrop-blur-lg border border-white/30 rounded-3xl px-8 py-4 hover:bg-white/20 transition-all duration-300 transform hover:scale-110 shadow-2xl">
-                  <span className="text-3xl mr-3">{feature.icon}</span>
-                  <span className="font-bold text-xl">{feature.text}</span>
+                <div className={`absolute inset-0 bg-gradient-to-r ${feature.color} opacity-20 blur-lg sm:blur-xl group-hover:opacity-40 transition-opacity duration-300`}></div>
+                <div className="relative bg-white/10 backdrop-blur-lg border border-white/30 rounded-2xl sm:rounded-3xl px-4 py-2 sm:px-8 sm:py-4 hover:bg-white/20 transition-all duration-300 transform hover:scale-105 sm:hover:scale-110 shadow-2xl">
+                  <span className="text-xl sm:text-3xl mr-2 sm:mr-3">{feature.icon}</span>
+                  <span className="font-bold text-sm sm:text-xl">{feature.text}</span>
                 </div>
               </div>
             ))}
           </div>
           
           {/* Stats Bar */}
-          <div className="flex flex-wrap justify-center items-center gap-8 mt-16 text-lg text-gray-400">
-            <div className="flex items-center space-x-3 bg-white/5 px-4 py-2 rounded-full border border-white/10">
-              <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
-              <span className="font-medium">Live on Base</span>
+          <div className="flex flex-wrap justify-center items-center gap-4 sm:gap-8 mt-8 sm:mt-16 text-sm sm:text-lg text-gray-400 px-4">
+            <div className="flex items-center space-x-2 sm:space-x-3 bg-white/5 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full border border-white/10">
+              <div className="w-2 h-2 sm:w-3 sm:h-3 bg-green-400 rounded-full animate-pulse"></div>
+              <span className="font-medium text-xs sm:text-base">Live on Base</span>
             </div>
-            <div className="w-px h-6 bg-white/20 hidden md:block"></div>
-            <div className="flex items-center space-x-3 bg-white/5 px-4 py-2 rounded-full border border-white/10">
-              <span className="text-xl">⚡</span>
-              <span className="font-medium">Gas Optimized</span>
+            <div className="w-px h-4 sm:h-6 bg-white/20 hidden md:block"></div>
+            <div className="flex items-center space-x-2 sm:space-x-3 bg-white/5 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full border border-white/10">
+              <span className="text-sm sm:text-xl">⚡</span>
+              <span className="font-medium text-xs sm:text-base">Gas Optimized</span>
             </div>
-            <div className="w-px h-6 bg-white/20 hidden md:block"></div>
-            <div className="flex items-center space-x-3 bg-white/5 px-4 py-2 rounded-full border border-white/10">
-              <span className="text-xl">🔒</span>
-              <span className="font-medium">Fully Audited</span>
+            <div className="w-px h-4 sm:h-6 bg-white/20 hidden md:block"></div>
+            <div className="flex items-center space-x-2 sm:space-x-3 bg-white/5 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full border border-white/10">
+              <span className="text-sm sm:text-xl">🔒</span>
+              <span className="font-medium text-xs sm:text-base">Fully Audited</span>
             </div>
           </div>
         </div>
       </div>
 
       {/* Main Content - Full Width Centered */}
-      <div className="relative z-10 w-full max-w-7xl mx-auto px-6 py-20">
-        <div className="flex flex-col lg:flex-row items-center justify-center gap-12 lg:gap-20">
+      <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 py-12 sm:py-20">
+        <div className="flex flex-col lg:flex-row items-center justify-center gap-8 lg:gap-20">
         
         {/* Waitlist Form - Centered and Larger */}
         <div className="w-full lg:w-1/2 max-w-2xl">
           <div className="relative group">
-            <div className="absolute -inset-2 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 rounded-3xl blur-lg opacity-30 group-hover:opacity-50 transition duration-1000"></div>
-            <div className="relative bg-black/90 backdrop-blur-xl border-2 border-white/30 p-12 rounded-3xl shadow-2xl">
-              <div className="text-center mb-12">
-                <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full mb-6 shadow-2xl">
-                  <span className="text-3xl">🚀</span>
+            <div className="absolute -inset-1 sm:-inset-2 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 rounded-3xl blur-lg opacity-30 group-hover:opacity-50 transition duration-1000"></div>
+            <div className="relative bg-black/90 backdrop-blur-xl border-2 border-white/30 p-6 sm:p-12 rounded-3xl shadow-2xl">
+              <div className="text-center mb-8 sm:mb-12">
+                <div className="inline-flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full mb-4 sm:mb-6 shadow-2xl">
+                  <span className="text-2xl sm:text-3xl">🚀</span>
                 </div>
-                <h2 className="text-4xl lg:text-5xl font-black mb-4 bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
+                <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black mb-3 sm:mb-4 bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
                   {isSubmitted ? "Welcome Aboard! 🎉" : "Join the Elite Waitlist"}
                 </h2>
-                <p className="text-gray-400 text-xl lg:text-2xl leading-relaxed">
+                <p className="text-gray-400 text-lg sm:text-xl lg:text-2xl leading-relaxed px-2">
                   {isSubmitted 
                     ? "You're officially in! Get ready for the ultimate word gaming experience."
                     : "Secure your spot in the most anticipated onchain word game"}
                 </p>
                 
                 {/* Live Counter - Enhanced */}
-                <div className="mt-8 p-6 bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-3xl border-2 border-blue-500/20 backdrop-blur-sm">
-                  <div className="text-lg text-gray-400 mb-2">Players in waitlist</div>
-                  <div className="text-5xl lg:text-6xl font-black bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+                <div className="mt-6 sm:mt-8 p-4 sm:p-6 bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-2xl sm:rounded-3xl border-2 border-blue-500/20 backdrop-blur-sm">
+                  <div className="text-sm sm:text-lg text-gray-400 mb-1 sm:mb-2">Players in waitlist</div>
+                  <div className="text-3xl sm:text-5xl lg:text-6xl font-black bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
                     {animatedCount.toLocaleString()}+
                   </div>
-                  <div className="flex items-center justify-center mt-4 space-x-3">
-                    <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
-                    <span className="text-sm text-green-400 font-semibold">Growing fast</span>
+                  <div className="flex items-center justify-center mt-2 sm:mt-4 space-x-2 sm:space-x-3">
+                    <div className="w-2 h-2 sm:w-3 sm:h-3 bg-green-400 rounded-full animate-pulse"></div>
+                    <span className="text-xs sm:text-sm text-green-400 font-semibold">Growing fast</span>
                   </div>
                 </div>
               </div>
             
             {!isSubmitted ? (
-              <form onSubmit={handleSubmit} className="space-y-8">
+              <form onSubmit={handleSubmit} className="space-y-6 sm:space-y-8">
                 <div className="relative group">
-                  <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-3xl blur opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-2xl sm:rounded-3xl blur opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                   <input
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="Enter your email address"
-                    className="relative w-full px-8 py-6 rounded-3xl bg-white/5 border-2 border-white/20 text-white placeholder-gray-400 focus:outline-none focus:ring-4 focus:ring-blue-400/50 focus:border-blue-400/50 backdrop-blur-sm transition-all duration-300 text-xl"
+                    className="relative w-full px-4 py-4 sm:px-8 sm:py-6 rounded-2xl sm:rounded-3xl bg-white/5 border-2 border-white/20 text-white placeholder-gray-400 focus:outline-none focus:ring-4 focus:ring-blue-400/50 focus:border-blue-400/50 backdrop-blur-sm transition-all duration-300 text-lg sm:text-xl"
                     required
                   />
-                  <div className="absolute right-6 top-1/2 transform -translate-y-1/2 text-gray-400 text-2xl">
+                  <div className="absolute right-4 sm:right-6 top-1/2 transform -translate-y-1/2 text-gray-400 text-xl sm:text-2xl">
                     ✉️
                   </div>
                 </div>
                 
                 <button
                   type="submit"
-                  className="relative w-full py-6 rounded-3xl bg-gradient-to-r from-blue-500 via-purple-600 to-pink-600 hover:from-blue-600 hover:via-purple-700 hover:to-pink-700 font-black text-2xl transition-all duration-300 transform hover:scale-105 shadow-2xl border-2 border-white/20 overflow-hidden group"
+                  className="relative w-full py-4 sm:py-6 rounded-2xl sm:rounded-3xl bg-gradient-to-r from-blue-500 via-purple-600 to-pink-600 hover:from-blue-600 hover:via-purple-700 hover:to-pink-700 font-black text-lg sm:text-2xl transition-all duration-300 transform hover:scale-105 shadow-2xl border-2 border-white/20 overflow-hidden group"
                 >
                   <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
                   <span className="relative">🚀 Secure My Spot</span>
                 </button>
                 
-                <div className="text-center text-lg text-gray-400">
+                <div className="text-center text-base sm:text-lg text-gray-400">
                   <p>🔒 We respect your privacy. No spam, ever.</p>
                 </div>
               </form>
             ) : (
-              <div className="text-center space-y-8">
+              <div className="text-center space-y-6 sm:space-y-8">
                 <div className="relative">
-                  <div className="absolute inset-0 bg-green-500/20 rounded-full blur-2xl"></div>
-                  <div className="relative w-24 h-24 bg-gradient-to-r from-green-400 to-emerald-500 rounded-full flex items-center justify-center mx-auto shadow-2xl">
-                    <span className="text-4xl animate-bounce">✓</span>
+                  <div className="absolute inset-0 bg-green-500/20 rounded-full blur-xl sm:blur-2xl"></div>
+                  <div className="relative w-20 h-20 sm:w-24 sm:h-24 bg-gradient-to-r from-green-400 to-emerald-500 rounded-full flex items-center justify-center mx-auto shadow-2xl">
+                    <span className="text-3xl sm:text-4xl animate-bounce">✓</span>
                   </div>
                 </div>
-                <div className="space-y-3">
-                  <p className="text-green-400 font-bold text-2xl">Successfully Registered!</p>
-                  <p className="text-gray-400 text-lg">Check your email for confirmation</p>
+                <div className="space-y-2 sm:space-y-3">
+                  <p className="text-green-400 font-bold text-xl sm:text-2xl">Successfully Registered!</p>
+                  <p className="text-gray-400 text-base sm:text-lg">Check your email for confirmation</p>
                 </div>
                 
-                <div className="p-6 bg-green-500/10 rounded-3xl border-2 border-green-500/20">
-                  <p className="text-lg text-green-300">
-                    🎯 You're now #<span className="font-bold text-xl">{waitlistCount.toLocaleString()}</span> in line
+                <div className="p-4 sm:p-6 bg-green-500/10 rounded-2xl sm:rounded-3xl border-2 border-green-500/20">
+                  <p className="text-base sm:text-lg text-green-300">
+                    🎯 You're now #<span className="font-bold text-lg sm:text-xl">{waitlistCount.toLocaleString()}</span> in line
                   </p>
                 </div>
               </div>
