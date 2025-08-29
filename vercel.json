@@ -1,6 +1,6 @@
-// vercel.json
 {
-    "rewrites": [
-      { "source": "/(.*)", "destination": "/" }
-    ]
-  }
+  "rewrites": [
+    { "source": "/", "destination": "/waitlist" },
+    { "source": "/success", "destination": "/success" }
+  ]
+}
