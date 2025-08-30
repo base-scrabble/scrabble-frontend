@@ -95,60 +95,8 @@ export default function Waitlist() {
     // Try loading Prefinery after a short delay
     setTimeout(loadPrefinery, 500);
 
-    // Add minimal custom styles for Prefinery widget that don't interfere with functionality
-    const style = document.createElement('style');
-    style.textContent = `
-      [data-prefinery-embed] {
-        position: relative !important;
-        z-index: 10 !important;
-      }
-      
-      [data-prefinery-embed] input {
-        background: rgba(255, 255, 255, 0.1) !important;
-        border: 1px solid rgba(255, 255, 255, 0.3) !important;
-        border-radius: 12px !important;
-        color: white !important;
-        padding: 12px 16px !important;
-        font-size: 16px !important;
-        pointer-events: auto !important;
-        z-index: 20 !important;
-        position: relative !important;
-      }
-      
-      [data-prefinery-embed] input:focus {
-        border-color: #3b82f6 !important;
-        outline: none !important;
-        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3) !important;
-      }
-      
-      [data-prefinery-embed] input::placeholder {
-        color: rgba(156, 163, 175, 0.8) !important;
-      }
-      
-      [data-prefinery-embed] button {
-        background: linear-gradient(to right, #3b82f6, #8b5cf6) !important;
-        border: none !important;
-        border-radius: 12px !important;
-        color: white !important;
-        font-weight: 700 !important;
-        font-size: 16px !important;
-        padding: 12px 24px !important;
-        cursor: pointer !important;
-        pointer-events: auto !important;
-        z-index: 20 !important;
-        position: relative !important;
-      }
-      
-      [data-prefinery-embed] button:hover {
-        background: linear-gradient(to right, #2563eb, #7c3aed) !important;
-        transform: translateY(-1px) !important;
-      }
-      
-      [data-prefinery-embed] * {
-        pointer-events: auto !important;
-      }
-    `;
-    document.head.appendChild(style);
+    // Remove all custom styling to avoid interference
+    // Prefinery widget will use its default styling
 
     // Animate counter on load
     const timer = setInterval(() => {
@@ -353,27 +301,15 @@ export default function Waitlist() {
                 </div>
               </div>
             
-            {/* Prefinery Widget - Simplified approach */}
+            {/* Prefinery Widget - Minimal wrapper */}
             <div className="space-y-6 sm:space-y-8">
-              <div className="relative group">
-                <div className="absolute -inset-1 sm:-inset-2 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-2xl sm:rounded-3xl blur opacity-50 transition-opacity duration-300 pointer-events-none"></div>
-                <div className="relative bg-white/5 backdrop-blur-sm border-2 border-white/20 rounded-2xl sm:rounded-3xl p-4 sm:p-6 overflow-visible">
-                  {/* Direct Prefinery embed with clear z-index */}
-                  <div 
-                    data-prefinery-embed="httxquc8" 
-                    style={{ 
-                      position: 'relative', 
-                      zIndex: 100,
-                      pointerEvents: 'auto'
-                    }}
-                  ></div>
-                  
-                  {/* Fallback message if widget doesn't load */}
-                  <div id="prefinery-fallback" className="text-center py-8" style={{ zIndex: 50 }}>
-                    <p className="text-gray-400 mb-4">Loading waitlist form...</p>
-                    <div className="animate-spin w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full mx-auto"></div>
-                  </div>
-                </div>
+              {/* Direct Prefinery embed - no wrapper styling */}
+              <div data-prefinery-embed="httxquc8"></div>
+              
+              {/* Fallback message if widget doesn't load */}
+              <div id="prefinery-fallback" className="text-center py-8">
+                <p className="text-gray-400 mb-4">Loading waitlist form...</p>
+                <div className="animate-spin w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full mx-auto"></div>
               </div>
               
               <div className="text-center text-base sm:text-lg text-gray-400">
