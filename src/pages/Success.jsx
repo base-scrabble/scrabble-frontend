@@ -167,7 +167,7 @@ export default function Success() {
               
               <div className="space-y-4">
                 <a
-                  href="https://x.com/intent/tweet?text=I%20just%20joined%20the%20BaseScrabble%20waitlist!%20%F0%9F%8E%B2%20Join%20me%20at%20https://basescrabble.vercel.app"
+                  href="https://x.com/intent/tweet?text=I%20just%20joined%20the%20BaseScrabble%20waitlist!%20%F0%9F%8E%B2%20Join%20me%20at%20https://basescrabble.xyz"
                   target="_blank"
                   rel="noopener"
                   className="block w-full py-4 bg-gradient-to-r from-gray-800 to-black hover:from-gray-700 hover:to-gray-900 rounded-2xl font-bold text-lg transition-all duration-300 transform hover:scale-105 shadow-lg border border-white/10"
@@ -175,7 +175,7 @@ export default function Success() {
                   𝕏 Share on X
                 </a>
                 <a
-                  href="https://warpcast.com/~/compose?text=I%20just%20joined%20the%20BaseScrabble%20waitlist!%20%F0%9F%8E%B2%20Join%20me%20at%20https://basescrabble.vercel.app"
+                  href="https://warpcast.com/~/compose?text=I%20just%20joined%20the%20BaseScrabble%20waitlist!%20%F0%9F%8E%B2%20Join%20me%20at%20https://basescrabble.xyz"
                   target="_blank"
                   rel="noopener"
                   className="block w-full py-4 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 rounded-2xl font-bold text-lg transition-all duration-300 transform hover:scale-105 shadow-lg"
