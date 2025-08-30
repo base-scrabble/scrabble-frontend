@@ -15,88 +15,28 @@ export default function Waitlist() {
   ];
 
   useEffect(() => {
-    // Try to load Prefinery widget with error handling
-    const loadPrefinery = () => {
-      // Initialize prefinery function
-      window.prefinery = window.prefinery || function() {
-        (window.prefinery.q = window.prefinery.q || []).push(arguments);
-      };
-      
-      const widgetScript = document.createElement('script');
-      widgetScript.src = 'https://widget.prefinery.com/widget/v2/httxquc8.js';
-      widgetScript.defer = true;
-      
-      widgetScript.onload = () => {
-        console.log('Prefinery script loaded successfully');
+    // Initialize Prefinery with the exact script format they provide
+    window.prefinery = window.prefinery || function() {
+      (window.prefinery.q = window.prefinery.q || []).push(arguments);
+    };
+    
+    // Add the exact scripts as provided by Prefinery
+    const initScript = document.createElement('script');
+    initScript.textContent = `prefinery=window.prefinery||function(){(window.prefinery.q=window.prefinery.q||[]).push(arguments)};`;
+    document.head.appendChild(initScript);
+    
+    const widgetScript = document.createElement('script');
+    widgetScript.src = 'https://widget.prefinery.com/widget/v2/httxquc8.js';
+    widgetScript.defer = true;
+    widgetScript.onload = () => {
+      console.log('Prefinery loaded');
+      // Hide fallback after widget loads
+      setTimeout(() => {
         const fallback = document.getElementById('prefinery-fallback');
-        if (fallback) {
-          setTimeout(() => {
-            fallback.style.display = 'none';
-          }, 2000);
-        }
-      };
-      
-      widgetScript.onerror = () => {
-        console.error('Failed to load Prefinery widget - showing fallback form');
-        showFallbackForm();
-      };
-      
-      document.head.appendChild(widgetScript);
+        if (fallback) fallback.style.display = 'none';
+      }, 1000);
     };
-    
-    const showFallbackForm = () => {
-      const container = document.querySelector('[data-prefinery-embed="httxquc8"]');
-      const fallback = document.getElementById('prefinery-fallback');
-      
-      if (container && fallback) {
-        fallback.innerHTML = `
-          <form id="waitlist-form" class="space-y-4">
-            <input
-              type="email"
-              id="email-input"
-              placeholder="Enter your email address"
-              class="w-full px-4 py-4 rounded-xl bg-white/10 border-2 border-white/20 text-white placeholder-gray-400 focus:outline-none focus:ring-4 focus:ring-blue-400/50 focus:border-blue-400/50 backdrop-blur-sm transition-all duration-300 text-lg"
-              required
-            />
-            <button
-              type="submit"
-              class="w-full py-4 rounded-xl bg-gradient-to-r from-blue-500 via-purple-600 to-pink-600 hover:from-blue-600 hover:via-purple-700 hover:to-pink-700 font-black text-lg transition-all duration-300 transform hover:scale-105 shadow-xl border-2 border-white/20"
-            >
-              🚀 Join Waitlist
-            </button>
-          </form>
-        `;
-        
-        // Add form submission handler
-        const form = document.getElementById('waitlist-form');
-        if (form) {
-          form.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const email = document.getElementById('email-input').value;
-            if (email) {
-              // Store email in localStorage for now
-              localStorage.setItem('waitlist_email', email);
-              // Show success message
-              fallback.innerHTML = `
-                <div class="text-center py-8">
-                  <div class="w-16 h-16 bg-gradient-to-r from-green-400 to-emerald-500 rounded-full flex items-center justify-center mx-auto mb-4 shadow-xl">
-                    <span class="text-3xl animate-bounce">✓</span>
-                  </div>
-                  <p class="text-green-400 font-bold text-xl mb-2">Thanks for joining!</p>
-                  <p class="text-gray-400">We'll notify you when BaseScrabble launches</p>
-                </div>
-              `;
-            }
-          });
-        }
-      }
-    };
-    
-    // Try loading Prefinery after a short delay
-    setTimeout(loadPrefinery, 500);
-
-    // Remove all custom styling to avoid interference
-    // Prefinery widget will use its default styling
+    document.head.appendChild(widgetScript);
 
     // Animate counter on load
     const timer = setInterval(() => {
@@ -274,49 +214,41 @@ export default function Waitlist() {
         
         {/* Waitlist Form - Centered and Larger */}
         <div className="w-full lg:w-1/2 max-w-2xl">
-          <div className="relative group">
-            <div className="absolute -inset-1 sm:-inset-2 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 rounded-3xl blur-lg opacity-30 group-hover:opacity-50 transition duration-1000"></div>
-            <div className="relative bg-black/90 backdrop-blur-xl border-2 border-white/30 p-6 sm:p-12 rounded-3xl shadow-2xl">
-              <div className="text-center mb-8 sm:mb-12">
-                <div className="inline-flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full mb-4 sm:mb-6 shadow-2xl">
-                  <span className="text-2xl sm:text-3xl">🚀</span>
-                </div>
-                <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black mb-3 sm:mb-4 bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
-                  Join the Elite Waitlist
-                </h2>
-                <p className="text-gray-400 text-lg sm:text-xl lg:text-2xl leading-relaxed px-2">
-                  Secure your spot in the most anticipated onchain word game
-                </p>
-                
-                {/* Live Counter - Enhanced */}
-                <div className="mt-6 sm:mt-8 p-4 sm:p-6 bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-2xl sm:rounded-3xl border-2 border-blue-500/20 backdrop-blur-sm">
-                  <div className="text-sm sm:text-lg text-gray-400 mb-1 sm:mb-2">Players in waitlist</div>
-                  <div className="text-3xl sm:text-5xl lg:text-6xl font-black bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-                    {animatedCount.toLocaleString()}+
-                  </div>
-                  <div className="flex items-center justify-center mt-2 sm:mt-4 space-x-2 sm:space-x-3">
-                    <div className="w-2 h-2 sm:w-3 sm:h-3 bg-green-400 rounded-full animate-pulse"></div>
-                    <span className="text-xs sm:text-sm text-green-400 font-semibold">Growing fast</span>
-                  </div>
-                </div>
-              </div>
+          <div className="text-center mb-8 sm:mb-12">
+            <div className="inline-flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full mb-4 sm:mb-6 shadow-2xl">
+              <span className="text-2xl sm:text-3xl">🚀</span>
+            </div>
+            <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black mb-3 sm:mb-4 bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
+              Join the Elite Waitlist
+            </h2>
+            <p className="text-gray-400 text-lg sm:text-xl lg:text-2xl leading-relaxed px-2">
+              Secure your spot in the most anticipated onchain word game
+            </p>
             
-            {/* Prefinery Widget - Minimal wrapper */}
-            <div className="space-y-6 sm:space-y-8">
-              {/* Direct Prefinery embed - no wrapper styling */}
-              <div data-prefinery-embed="httxquc8"></div>
-              
-              {/* Fallback message if widget doesn't load */}
-              <div id="prefinery-fallback" className="text-center py-8">
-                <p className="text-gray-400 mb-4">Loading waitlist form...</p>
-                <div className="animate-spin w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full mx-auto"></div>
+            {/* Live Counter - Enhanced */}
+            <div className="mt-6 sm:mt-8 p-4 sm:p-6 bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-2xl sm:rounded-3xl border-2 border-blue-500/20 backdrop-blur-sm">
+              <div className="text-sm sm:text-lg text-gray-400 mb-1 sm:mb-2">Players in waitlist</div>
+              <div className="text-3xl sm:text-5xl lg:text-6xl font-black bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+                {animatedCount.toLocaleString()}+
               </div>
-              
-              <div className="text-center text-base sm:text-lg text-gray-400">
-                <p>🔒 We respect your privacy. No spam, ever.</p>
+              <div className="flex items-center justify-center mt-2 sm:mt-4 space-x-2 sm:space-x-3">
+                <div className="w-2 h-2 sm:w-3 sm:h-3 bg-green-400 rounded-full animate-pulse"></div>
+                <span className="text-xs sm:text-sm text-green-400 font-semibold">Growing fast</span>
               </div>
             </div>
-            </div>
+          </div>
+          
+          {/* Prefinery Widget - Raw embed with no interference */}
+          <div data-prefinery-embed="httxquc8" style={{ minHeight: '200px', position: 'relative', zIndex: 1000 }}></div>
+          
+          {/* Fallback message if widget doesn't load */}
+          <div id="prefinery-fallback" className="text-center py-8" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', zIndex: 1 }}>
+            <p className="text-gray-400 mb-4">Loading waitlist form...</p>
+            <div className="animate-spin w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full mx-auto"></div>
+          </div>
+          
+          <div className="text-center text-base sm:text-lg text-gray-400 mt-6">
+            <p>🔒 We respect your privacy. No spam, ever.</p>
           </div>
         </div>
 
