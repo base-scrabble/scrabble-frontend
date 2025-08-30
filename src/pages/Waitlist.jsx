@@ -15,23 +15,85 @@ export default function Waitlist() {
   ];
 
   useEffect(() => {
-    // Add Prefinery initialization script
-    const initScript = document.createElement('script');
-    initScript.innerHTML = `
-      prefinery = window.prefinery || function() {
+    // Try to load Prefinery widget with error handling
+    const loadPrefinery = () => {
+      // Initialize prefinery function
+      window.prefinery = window.prefinery || function() {
         (window.prefinery.q = window.prefinery.q || []).push(arguments);
       };
-    `;
-    document.head.appendChild(initScript);
-    
-    // Load the widget script
-    const widgetScript = document.createElement('script');
-    widgetScript.src = 'https://widget.prefinery.com/widget/v2/httxquc8.js';
-    widgetScript.defer = true;
-    widgetScript.onload = () => {
-      console.log('Prefinery widget script loaded');
+      
+      const widgetScript = document.createElement('script');
+      widgetScript.src = 'https://widget.prefinery.com/widget/v2/httxquc8.js';
+      widgetScript.defer = true;
+      
+      widgetScript.onload = () => {
+        console.log('Prefinery script loaded successfully');
+        const fallback = document.getElementById('prefinery-fallback');
+        if (fallback) {
+          setTimeout(() => {
+            fallback.style.display = 'none';
+          }, 2000);
+        }
+      };
+      
+      widgetScript.onerror = () => {
+        console.error('Failed to load Prefinery widget - showing fallback form');
+        showFallbackForm();
+      };
+      
+      document.head.appendChild(widgetScript);
     };
-    document.head.appendChild(widgetScript);
+    
+    const showFallbackForm = () => {
+      const container = document.querySelector('[data-prefinery-embed="httxquc8"]');
+      const fallback = document.getElementById('prefinery-fallback');
+      
+      if (container && fallback) {
+        fallback.innerHTML = `
+          <form id="waitlist-form" class="space-y-4">
+            <input
+              type="email"
+              id="email-input"
+              placeholder="Enter your email address"
+              class="w-full px-4 py-4 rounded-xl bg-white/10 border-2 border-white/20 text-white placeholder-gray-400 focus:outline-none focus:ring-4 focus:ring-blue-400/50 focus:border-blue-400/50 backdrop-blur-sm transition-all duration-300 text-lg"
+              required
+            />
+            <button
+              type="submit"
+              class="w-full py-4 rounded-xl bg-gradient-to-r from-blue-500 via-purple-600 to-pink-600 hover:from-blue-600 hover:via-purple-700 hover:to-pink-700 font-black text-lg transition-all duration-300 transform hover:scale-105 shadow-xl border-2 border-white/20"
+            >
+              🚀 Join Waitlist
+            </button>
+          </form>
+        `;
+        
+        // Add form submission handler
+        const form = document.getElementById('waitlist-form');
+        if (form) {
+          form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email-input').value;
+            if (email) {
+              // Store email in localStorage for now
+              localStorage.setItem('waitlist_email', email);
+              // Show success message
+              fallback.innerHTML = `
+                <div class="text-center py-8">
+                  <div class="w-16 h-16 bg-gradient-to-r from-green-400 to-emerald-500 rounded-full flex items-center justify-center mx-auto mb-4 shadow-xl">
+                    <span class="text-3xl animate-bounce">✓</span>
+                  </div>
+                  <p class="text-green-400 font-bold text-xl mb-2">Thanks for joining!</p>
+                  <p class="text-gray-400">We'll notify you when BaseScrabble launches</p>
+                </div>
+              `;
+            }
+          });
+        }
+      }
+    };
+    
+    // Try loading Prefinery after a short delay
+    setTimeout(loadPrefinery, 500);
 
     // Add custom styles for Prefinery widget
     const style = document.createElement('style');
@@ -287,36 +349,26 @@ export default function Waitlist() {
                 </div>
               </div>
             
-            {/* Temporary fallback form while debugging Prefinery */}
-            <form className="space-y-6 sm:space-y-8">
+            {/* Prefinery Widget - Simplified approach */}
+            <div className="space-y-6 sm:space-y-8">
               <div className="relative group">
                 <div className="absolute -inset-1 sm:-inset-2 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-2xl sm:rounded-3xl blur opacity-50 transition-opacity duration-300"></div>
                 <div className="relative bg-white/5 backdrop-blur-sm border-2 border-white/20 rounded-2xl sm:rounded-3xl p-4 sm:p-6">
-                  <input
-                    type="email"
-                    placeholder="Enter your email address"
-                    className="w-full px-4 py-4 sm:px-6 sm:py-4 rounded-xl bg-white/10 border-2 border-white/20 text-white placeholder-gray-400 focus:outline-none focus:ring-4 focus:ring-blue-400/50 focus:border-blue-400/50 backdrop-blur-sm transition-all duration-300 text-lg"
-                    required
-                  />
-                  <button
-                    type="submit"
-                    className="w-full mt-4 py-4 rounded-xl bg-gradient-to-r from-blue-500 via-purple-600 to-pink-600 hover:from-blue-600 hover:via-purple-700 hover:to-pink-700 font-black text-lg transition-all duration-300 transform hover:scale-105 shadow-xl border-2 border-white/20"
-                  >
-                    🚀 Join Waitlist
-                  </button>
+                  {/* Direct Prefinery embed */}
+                  <div data-prefinery-embed="httxquc8"></div>
                   
-                  {/* Prefinery Widget Container - Hidden for now */}
-                  <div 
-                    data-prefinery-embed="httxquc8" 
-                    style={{ display: 'none' }}
-                  ></div>
+                  {/* Fallback message if widget doesn't load */}
+                  <div id="prefinery-fallback" className="text-center py-8">
+                    <p className="text-gray-400 mb-4">Loading waitlist form...</p>
+                    <div className="animate-spin w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full mx-auto"></div>
+                  </div>
                 </div>
               </div>
               
               <div className="text-center text-base sm:text-lg text-gray-400">
                 <p>🔒 We respect your privacy. No spam, ever.</p>
               </div>
-            </form>
+            </div>
             </div>
           </div>
         </div>
