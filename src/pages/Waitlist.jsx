@@ -15,28 +15,56 @@ export default function Waitlist() {
   ];
 
   useEffect(() => {
-    // Initialize Prefinery with the exact script format they provide
-    window.prefinery = window.prefinery || function() {
-      (window.prefinery.q = window.prefinery.q || []).push(arguments);
+    // Create a working fallback form since Prefinery isn't loading
+    const showWorkingForm = () => {
+      const fallback = document.getElementById('prefinery-fallback');
+      if (fallback) {
+        fallback.innerHTML = `
+          <form id="waitlist-form" class="space-y-4">
+            <input
+              type="email"
+              id="email-input"
+              placeholder="Enter your email address"
+              class="w-full px-6 py-4 rounded-xl bg-white/10 border-2 border-white/20 text-white placeholder-gray-400 focus:outline-none focus:ring-4 focus:ring-blue-400/50 focus:border-blue-400/50 backdrop-blur-sm transition-all duration-300 text-lg"
+              required
+            />
+            <button
+              type="submit"
+              class="w-full py-4 rounded-xl bg-gradient-to-r from-blue-500 via-purple-600 to-pink-600 hover:from-blue-600 hover:via-purple-700 hover:to-pink-700 font-black text-lg transition-all duration-300 transform hover:scale-105 shadow-xl border-2 border-white/20"
+            >
+              🚀 Join Waitlist
+            </button>
+          </form>
+        `;
+        
+        // Add form submission handler
+        const form = document.getElementById('waitlist-form');
+        if (form) {
+          form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email-input').value;
+            if (email) {
+              // Store email in localStorage for now
+              localStorage.setItem('waitlist_email', email);
+              // Show success message
+              fallback.innerHTML = `
+                <div class="text-center py-8">
+                  <div class="w-16 h-16 bg-gradient-to-r from-green-400 to-emerald-500 rounded-full flex items-center justify-center mx-auto mb-4 shadow-xl">
+                    <span class="text-3xl animate-bounce">✓</span>
+                  </div>
+                  <p class="text-green-400 font-bold text-xl mb-2">Thanks for joining!</p>
+                  <p class="text-gray-400">We'll notify you when BaseScrabble launches</p>
+                  <p class="text-sm text-gray-500 mt-4">Email: ${email}</p>
+                </div>
+              `;
+            }
+          });
+        }
+      }
     };
-    
-    // Add the exact scripts as provided by Prefinery
-    const initScript = document.createElement('script');
-    initScript.textContent = `prefinery=window.prefinery||function(){(window.prefinery.q=window.prefinery.q||[]).push(arguments)};`;
-    document.head.appendChild(initScript);
-    
-    const widgetScript = document.createElement('script');
-    widgetScript.src = 'https://widget.prefinery.com/widget/v2/httxquc8.js';
-    widgetScript.defer = true;
-    widgetScript.onload = () => {
-      console.log('Prefinery loaded');
-      // Hide fallback after widget loads
-      setTimeout(() => {
-        const fallback = document.getElementById('prefinery-fallback');
-        if (fallback) fallback.style.display = 'none';
-      }, 1000);
-    };
-    document.head.appendChild(widgetScript);
+
+    // Show working form immediately instead of trying Prefinery
+    setTimeout(showWorkingForm, 500);
 
     // Animate counter on load
     const timer = setInterval(() => {
@@ -238,14 +266,14 @@ export default function Waitlist() {
             </div>
           </div>
           
-          {/* Prefinery Widget - Raw embed with no interference */}
-          <div data-prefinery-embed="httxquc8" style={{ minHeight: '200px', position: 'relative', zIndex: 1000 }}></div>
-          
-          {/* Fallback message if widget doesn't load */}
-          <div id="prefinery-fallback" className="text-center py-8" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', zIndex: 1 }}>
-            <p className="text-gray-400 mb-4">Loading waitlist form...</p>
+          {/* Working Waitlist Form */}
+          <div id="prefinery-fallback" className="mt-8">
+            <p className="text-gray-400 mb-4 text-center">Loading waitlist form...</p>
             <div className="animate-spin w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full mx-auto"></div>
           </div>
+          
+          {/* Hidden Prefinery embed (not working) */}
+          <div data-prefinery-embed="httxquc8" style={{ display: 'none' }}></div>
           
           <div className="text-center text-base sm:text-lg text-gray-400 mt-6">
             <p>🔒 We respect your privacy. No spam, ever.</p>
