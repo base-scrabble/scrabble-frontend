@@ -1,6 +1,7 @@
 {
   "rewrites": [
     { "source": "/", "destination": "/waitlist" },
-    { "source": "/success", "destination": "/success" }
+    { "source": "/success", "destination": "/success" },
+    { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
