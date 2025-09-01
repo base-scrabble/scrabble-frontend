@@ -2,10 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Global styles */
 :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
+
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -13,6 +15,7 @@
 }
 
 body {
+  @apply bg-white text-gray-900; /* Tailwind way */
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
