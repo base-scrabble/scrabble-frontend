@@ -1,13 +1,25 @@
-import Tile from "./Tile";
+import React from "react";
+import { TILE_POINTS } from "../utils/constants";
 
-export default function Board() {
-  const grid = Array.from({ length: 15 }, () => Array(15).fill(""));
+const SIZE = 15;
 
+export default function GameBoard() {
+  // minimal 15x15 placeholder board
   return (
-    <div className="grid grid-cols-15 gap-1 bg-gray-200 p-2">
-      {grid.map((row, i) =>
-        row.map((_, j) => <Tile key={`${i}-${j}`} />)
-      )}
+    <div className="rounded-2xl overflow-hidden border border-white/10">
+      <div className="grid" style={{ gridTemplateColumns: `repeat(${SIZE}, 1fr)` }}>
+        {Array.from({ length: SIZE * SIZE }).map((_, i) => (
+          <div
+            key={i}
+            className="aspect-square text-center text-xs flex items-center justify-center border border-white/[0.06] bg-white/[0.02]"
+          >
+            {/* empty tile placeholder */}
+          </div>
+        ))}
+      </div>
+      <div className="p-3 text-xs text-gray-400">
+        Tile points sample: B={TILE_POINTS.B}, S={TILE_POINTS.S}, Q={TILE_POINTS.Q}
+      </div>
     </div>
   );
 }

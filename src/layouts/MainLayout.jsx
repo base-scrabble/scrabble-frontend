@@ -16,7 +16,7 @@ export default function MainLayout() {
         <Outlet />
       </main>
       <footer className="bg-gray-100 p-4 text-center text-sm">
-        © 2025 Based Scrabble by noblepeter2000
+        © 2025 Based Scrabble
       </footer>
     </div>
   );

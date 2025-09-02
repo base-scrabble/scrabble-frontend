@@ -8,6 +8,9 @@ export default function Navbar() {
         <Link to="/" className="hover:text-indigo-600">Home</Link>
         <Link to="/game" className="hover:text-indigo-600">Play</Link>
         <Link to="/waitlist" className="hover:text-indigo-600">Waitlist</Link>
+        <Link to="/score" className="hover:text-indigo-600">Scoreboard</Link>
+        <Link to="/tournaments" className="hover:text-indigo-600">Tournaments</Link>
+        <Link to="/leaderboard" className="hover:text-indigo-600">Leaderboard</Link>
       </div>
     </nav>
   );

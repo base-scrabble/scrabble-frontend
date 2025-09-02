@@ -14,9 +14,12 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-body {
-  @apply bg-white text-gray-900; /* Tailwind way */
-  margin: 0;
-  min-width: 320px;
-  min-height: 100vh;
+/* Use Tailwind's base layer for body styling */
+@layer base {
+  body {
+    @apply bg-white text-gray-900;
+    margin: 0;
+    min-width: 320px;
+    min-height: 100vh;
+  }
 }
