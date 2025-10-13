@@ -1,18 +1,12 @@
-export default function PlayerPanel() {
-  const letters = ["A", "B", "C", "D", "E", "F", "G"];
+import PlayerInfo from "./PlayerInfo";
+
+export default function PlayerPanel({ players = [], scores = {} }) {
   return (
-    <div className="p-4 border rounded bg-white">
-      <h3 className="font-bold mb-2">Your Tiles</h3>
-      <div className="flex space-x-2">
-        {letters.map((letter, idx) => (
-          <div
-            key={idx}
-            className="w-8 h-8 bg-yellow-200 border flex items-center justify-center"
-          >
-            {letter}
-          </div>
-        ))}
-      </div>
+    <div className="bg-gray-100 p-3 rounded shadow mb-4">
+      <h3 className="font-bold mb-2">Players</h3>
+      {players.map((p, idx) => (
+        <PlayerInfo key={idx} name={p} score={scores[p] || 0} />
+      ))}
     </div>
   );
 }

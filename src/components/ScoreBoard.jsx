@@ -1,12 +1,12 @@
-export default function Scoreboard({ players }) {
+// frontend: src/components/ScoreBoard.jsx
+export default function ScoreBoard({ players = [] }) {
   return (
-    <div className="bg-white rounded-lg shadow-md p-4">
-      <h2 className="text-lg font-bold mb-2">Scoreboard</h2>
-      <ul>
-        {players.map((p, i) => (
-          <li key={i} className="flex justify-between border-b py-1">
-            <span>{p.name}</span>
-            <span>{p.score}</span>
+    <div className="mb-4 p-2 bg-gray-100 rounded">
+      <h3 className="font-bold mb-2">Scores</h3>
+      <ul className="list-disc pl-6">
+        {players.map((p, idx) => (
+          <li key={idx}>
+            {p.name} <span className="text-gray-500">({p.score} pts)</span>
           </li>
         ))}
       </ul>

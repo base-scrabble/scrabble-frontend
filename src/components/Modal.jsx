@@ -1,14 +1,15 @@
-import React from "react";
+export default function Modal({ isOpen, onClose, children }) {
+  if (!isOpen) return null;
 
-export default function Modal({ open, title, children, onClose }) {
-  if (!open) return null;
   return (
-    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-      <div className="w-full max-w-md rounded-2xl bg-gray-900 border border-white/10 p-4">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="font-semibold">{title}</h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-200">✕</button>
-        </div>
+    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+      <div className="bg-white p-6 rounded shadow-lg max-w-md w-full">
+        <button
+          onClick={onClose}
+          className="absolute top-2 right-2 text-gray-600 hover:text-black"
+        >
+          ✕
+        </button>
         {children}
       </div>
     </div>

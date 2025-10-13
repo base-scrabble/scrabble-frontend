@@ -1,34 +1,29 @@
-import React, { useState } from "react";
+import { useState } from "react";
 
-export default function ChatBox() {
-  const [text, setText] = useState("");
-  const [msgs, setMsgs] = useState([{ id: 1, from: "System", body: "Welcome!" }]);
+export default function ChatBox({ onSend }) {
+  const [message, setMessage] = useState("");
 
-  const send = () => {
-    if (!text.trim()) return;
-    setMsgs(m => [...m, { id: Date.now(), from: "You", body: text }]);
-    setText("");
+  const handleSend = () => {
+    if (!message.trim()) return;
+    if (onSend) onSend(message);
+    setMessage("");
   };
 
   return (
-    <div className="p-4 rounded-2xl bg-white/5 border border-white/10 h-[380px] flex flex-col">
-      <div className="font-semibold mb-2">Chat</div>
-      <div className="flex-1 overflow-auto space-y-2 text-sm">
-        {msgs.map(m => (
-          <div key={m.id}>
-            <span className="text-gray-400 mr-2">{m.from}:</span>
-            <span>{m.body}</span>
-          </div>
-        ))}
-      </div>
-      <div className="mt-3 flex gap-2">
+    <div className="mt-4 border rounded p-2 bg-white">
+      <h3 className="font-bold mb-2">Chat</h3>
+      <div className="flex space-x-2">
         <input
-          value={text}
-          onChange={e => setText(e.target.value)}
-          className="flex-1 bg-white/10 border border-white/10 rounded px-3 py-2"
-          placeholder="Type message…"
+          type="text"
+          className="flex-grow border rounded px-2 py-1"
+          placeholder="Type a message..."
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
         />
-        <button onClick={send} className="px-3 py-2 rounded bg-sky-500 hover:bg-sky-600">
+        <button
+          className="bg-blue-600 text-white px-3 py-1 rounded"
+          onClick={handleSend}
+        >
           Send
         </button>
       </div>

@@ -1,7 +1,28 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { createGame } from "../api/gameApi";
 
 export default function CreateGame({ onCreate }) {
   const [playerName, setPlayerName] = useState("");
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+
+  const handleCreateGame = async () => {
+    if (!playerName) return;
+
+    setLoading(true);
+    try {
+      const data = await createGame(playerName); // ✅ use API helper
+      console.log("🎮 Created game:", data);
+      onCreate(data);
+      navigate(`/waiting/${data.gameId}`); // ✅ redirect to waiting room
+    } catch (err) {
+      console.error(err);
+      alert(`Error creating game: ${err.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="p-4 bg-white shadow rounded-lg max-w-sm mx-auto">
@@ -14,10 +35,11 @@ export default function CreateGame({ onCreate }) {
         onChange={(e) => setPlayerName(e.target.value)}
       />
       <button
-        className="bg-blue-500 text-white w-full py-2 rounded"
-        onClick={() => onCreate(playerName)}
+        className="bg-blue-500 text-white w-full py-2 rounded disabled:opacity-50"
+        onClick={handleCreateGame}
+        disabled={loading}
       >
-        Start Game
+        {loading ? "Starting..." : "Start Game"}
       </button>
     </div>
   );

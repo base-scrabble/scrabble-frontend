@@ -1,140 +1,112 @@
-import { useState, useEffect } from "react";
-import axios from "axios";
+// frontend: src/components/PlayGame.jsx
+import { useEffect, useState } from "react";
+import { API_BASE_URL } from "../config";
+import Board from "./Board";
+import Rack from "./Rack";
+import Controls from "./Controls";
+import ScoreBoard from "./ScoreBoard";
+import Timer from "./Timer";
 
-export default function PlayGame({ gameId, playerName }) {
-  const [board, setBoard] = useState([]); // 15x15 scrabble board
-  const [rack, setRack] = useState([]); // player's letters
-  const [turn, setTurn] = useState(null); // whose turn
-  const [players, setPlayers] = useState([]); // game players
-  const [message, setMessage] = useState("");
+export default function PlayGame({
+  gameId,
+  gameData,
+  setGameData,
+  playerName,
+  onExit,
+}) {
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  // Fetch game state on mount and poll every 3s
-  useEffect(() => {
-    fetchGameState();
-    const interval = setInterval(fetchGameState, 3000);
-    return () => clearInterval(interval);
-  }, [gameId]);
+  // ✅ helper: normalize players into { name, score }
+  const normalizePlayers = (arr) =>
+    (arr || []).map((p) =>
+      typeof p === "string"
+        ? { name: p, score: 0 }
+        : { name: p.name, score: p.score || 0 }
+    );
 
-  async function fetchGameState() {
+  // ✅ helper: normalize board into a 15x15 grid
+  const normalizeBoard = (boardState) => {
     try {
-      const res = await axios.get(`/api/game/state?gameId=${gameId}`);
-      setBoard(res.data.board);
-      setRack(res.data.rack);
-      setTurn(res.data.turn);
-      setPlayers(res.data.players);
-    } catch (err) {
-      console.error("Error fetching game state", err);
-    }
-  }
+      const parsed =
+        typeof boardState === "string" ? JSON.parse(boardState) : boardState;
+      if (Array.isArray(parsed) && parsed.length === 15) return parsed;
 
-  async function playWord(word, x, y, direction) {
+      // fallback: blank 15x15 board
+      return Array.from({ length: 15 }, () => Array(15).fill(null));
+    } catch {
+      return Array.from({ length: 15 }, () => Array(15).fill(null));
+    }
+  };
+
+  // 🔄 fetch game state every 5s
+  useEffect(() => {
+    if (!gameId) return;
+    const fetchState = async () => {
+      try {
+        const res = await fetch(`${API_BASE_URL}/game/state/${gameId}`);
+        if (!res.ok) throw new Error("Failed to fetch game state");
+        const data = await res.json();
+
+        data.players = normalizePlayers(data.players);
+        data.boardState = normalizeBoard(data.boardState);
+
+        setGameData(data);
+      } catch (err) {
+        console.error("❌ fetchState error:", err);
+        setError("Could not load game");
+      }
+    };
+    fetchState();
+    const interval = setInterval(fetchState, 5000);
+    return () => clearInterval(interval);
+  }, [gameId, setGameData]);
+
+  // 🎯 handle moves
+  const handleMove = async (move) => {
     setLoading(true);
     try {
-      const res = await axios.post("/api/game/play", {
-        gameId,
-        player: playerName,
-        word,
-        x, // row index
-        y, // col index
-        direction, // "horizontal" or "vertical"
+      const res = await fetch(`${API_BASE_URL}/game/move/${gameId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ playerName, ...move }),
       });
-      if (res.data.success) {
-        setMessage(`✅ Word played: ${word}`);
-        fetchGameState();
-      } else {
-        setMessage(`❌ Invalid word: ${res.data.error}`);
-      }
+      if (!res.ok) throw new Error("Move failed");
+
+      const data = await res.json();
+      data.players = normalizePlayers(data.players);
+      data.boardState = normalizeBoard(data.boardState);
+
+      setGameData(data);
     } catch (err) {
-      console.error("Play word error", err);
-      setMessage("❌ Error playing word");
+      console.error("❌ handleMove error:", err);
+      setError("Move failed");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
-  }
+  };
+
+  if (error) return <div className="p-4 text-red-500">{error}</div>;
 
   return (
     <div className="p-4">
-      <h2 className="text-xl font-bold mb-2">Game ID: {gameId}</h2>
-      <p className="mb-2">Players: {players.join(", ")}</p>
-      <p className="mb-2">Current Turn: {turn}</p>
+      <h2 className="text-xl font-bold mb-4">Game On: {gameId}</h2>
 
-      <div className="grid grid-cols-15 gap-0 border">
-        {board.map((row, i) =>
-          row.map((cell, j) => (
-            <div
-            key={`${i}-${j}`}
-            className="w-8 h-8 border flex items-center justify-center text-sm"
-          >
-            {cell || ""}
-          </div>
-        ))
-      )}
-    </div>
+      {/* ✅ ScoreBoard expects array of objects */}
+      <ScoreBoard players={normalizePlayers(gameData?.players)} />
 
-    <div className="mt-4">
-      <h3 className="font-semibold">Your Rack</h3>
-      <div className="flex space-x-2">
-        {rack.map((letter, idx) => (
-          <div
-            key={idx}
-            className="w-8 h-8 border flex items-center justify-center text-lg bg-yellow-100"
-          >
-            {letter}
-          </div>
-        ))}
-      </div>
-    </div>
+      <Timer />
 
-    <div className="mt-4">
-      <h3 className="font-semibold mb-2">Play a Word</h3>
-      <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            const word = e.target.word.value.trim();
-            const x = parseInt(e.target.x.value, 10);
-            const y = parseInt(e.target.y.value, 10);
-            const direction = e.target.direction.value;
-            if (!word) return setMessage(":x: Enter a word");
-            playWord(word, x, y, direction);
-            e.target.reset();
-          }}
-          className="space-y-2"
-        >
-          <input
-            type="text"
-            name="word"
-            placeholder="Word"
-            className="border p-1"
-          />
-          <input
-            type="number"
-            name="x"
-            placeholder="Row (0-14)"
-            className="border p-1"
-          />
-          <input
-            type="number"
-            name="y"
-            placeholder="Col (0-14)"
-            className="border p-1"
-          />
-          <select name="direction" className="border p-1">
-            <option value="horizontal">Horizontal</option>
-            <option value="vertical">Vertical</option>
-          </select>
-          <button
-            type="submit"
-            disabled={loading}
-            className="bg-blue-500 text-white px-3 py-1 rounded"
-          >
-            {loading ? "Playing..." : "Play Word"}
-          </button>
-        </form>
-      </div>
+      {/* ✅ always a 15x15 board */}
+      <Board board={normalizeBoard(gameData?.boardState)} />
 
-      {message && (
-        <div className="mt-4 p-2 bg-gray-100 border rounded">{message}</div>
-      )}
+      <Rack
+        tiles={gameData?.tiles || []}
+        onPlay={handleMove}
+        disabled={loading}
+      />
+
+      <Controls onExit={onExit} />
     </div>
   );
 }

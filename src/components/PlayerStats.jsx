@@ -1,18 +1,11 @@
-import React from "react";
-import { useGameStore } from "../store/gameStore";
-
-export default function PlayerStats() {
-  const players = useGameStore(s => s.players);
+export default function PlayerStats({ gamesPlayed = 0, wins = 0, losses = 0 }) {
   return (
-    <div className="p-4 rounded-2xl bg-white/5 border border-white/10">
-      <h3 className="font-semibold mb-3">Players</h3>
-      <ul className="space-y-2 text-sm">
-        {players.map(p => (
-          <li key={p.id} className="flex justify-between">
-            <span>{p.name}</span>
-            <span className="text-gray-300">{p.score}</span>
-          </li>
-        ))}
+    <div className="bg-white p-4 rounded shadow mb-4">
+      <h3 className="font-bold mb-2">Player Stats</h3>
+      <ul className="space-y-1 text-sm">
+        <li>Games Played: {gamesPlayed}</li>
+        <li>Wins: {wins}</li>
+        <li>Losses: {losses}</li>
       </ul>
     </div>
   );

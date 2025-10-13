@@ -1,11 +1,14 @@
-import React from "react";
-
-export default function TournamentBanner() {
+export default function TournamentBanner({ title, date, onJoin }) {
   return (
-    <div className="p-5 rounded-2xl border border-white/10 bg-gradient-to-r from-sky-600/20 to-emerald-600/20">
-      <div className="text-sm text-gray-300">Season 1</div>
-      <div className="text-xl font-bold">Based Scrabble Open</div>
-      <div className="text-sm text-gray-300">Qualifiers open soon</div>
+    <div className="bg-yellow-200 border-l-4 border-yellow-500 p-4 mb-4 rounded">
+      <h3 className="font-bold">{title}</h3>
+      <p className="text-sm">Starts: {date}</p>
+      <button
+        onClick={onJoin}
+        className="mt-2 bg-yellow-500 text-white px-3 py-1 rounded"
+      >
+        Join Tournament
+      </button>
     </div>
   );
 }

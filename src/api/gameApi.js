@@ -1,4 +1,3 @@
-// src/api/gameApi.js
 import { API_BASE_URL } from "../config";
 
 /**
@@ -79,21 +78,5 @@ export async function getGameState(gameId) {
     throw new Error(errorData.error || `Failed to get game state (status ${res.status})`);
   }
 
-  return res.json();
-}
-
-/**
- * Make a move
- */
-export async function makeMove(gameId, payload) {
-  const res = await fetch(`${API_BASE_URL}/game/move/${gameId}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
-  if (!res.ok) {
-    const errorData = await res.json().catch(() => ({}));
-    throw new Error(errorData.error || `Failed to make move (status ${res.status})`);
-  }
   return res.json();
 }
