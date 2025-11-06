@@ -1,20 +1,32 @@
 import { useEffect, useState } from "react";
+import { getSocket } from "../services/socketService";
+import { useGameStore } from "../store/gameStore";
 
-export default function Timer({ initial = 60, onTimeout }) {
-  const [time, setTime] = useState(initial);
+export default function Timer() {
+  const { minutesPerSide } = useGameStore();
+  const [timeLeft, setTimeLeft] = useState(minutesPerSide * 60);
 
   useEffect(() => {
-    if (time <= 0) {
-      if (onTimeout) onTimeout();
-      return;
+    const socket = getSocket();
+    if (socket) {
+      socket.on("game:state", (data) => {
+        if (data.timeLeft) setTimeLeft(data.timeLeft);
+      });
     }
-    const interval = setInterval(() => setTime((t) => t - 1), 1000);
-    return () => clearInterval(interval);
-  }, [time, onTimeout]);
+
+    const timer = setInterval(() => {
+      setTimeLeft((prev) => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  const minutes = Math.floor(timeLeft / 60);
+  const seconds = timeLeft % 60;
 
   return (
-    <div className="mb-4 text-center font-bold text-lg">
-      Time Left: {time}s
+    <div className="text-lg font-bold">
+      Time Left: {minutes}:{seconds < 10 ? `0${seconds}` : seconds}
     </div>
   );
 }

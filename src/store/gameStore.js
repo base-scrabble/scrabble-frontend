@@ -2,19 +2,34 @@ import { create } from "zustand";
 
 export const useGameStore = create((set) => ({
   roomCode: null,
-  minutesPerSide: 5,
-  players: [
-    { id: "p1", name: "You", score: 0 },
-    { id: "p2", name: "Rival", score: 0 },
-  ],
-  createRoom: ({ minutesPerSide }) =>
-    set(() => ({
-      roomCode: Math.random().toString(36).slice(2, 7).toUpperCase(),
-      minutesPerSide,
-    })),
-  joinRoom: (code) => set(() => ({ roomCode: code.toUpperCase() })),
+  status: "waiting",
+  turn: 1,
+  players: [],
+  boardState: Array.from({ length: 15 }, () => Array(15).fill(null)),
+  setGameState: (data) =>
+    set({
+      roomCode: data.gameCode,
+      status: data.status || "waiting",
+      turn: data.currentTurn || 1,
+      players: (data.players || []).map((p) => ({
+        id: p.id,
+        name: p.name,
+        score: p.score || 0,
+        tiles: p.tiles ? JSON.parse(p.tiles) : [],
+      })),
+      boardState: data.boardState
+        ? Array.isArray(data.boardState)
+          ? data.boardState
+          : JSON.parse(data.boardState)
+        : Array.from({ length: 15 }, () => Array(15).fill(null)),
+    }),
+  createRoom: ({ gameCode }) =>
+    set({ roomCode: gameCode, status: "waiting", turn: 1, players: [], boardState: Array.from({ length: 15 }, () => Array(15).fill(null)) }),
+  joinRoom: (code) => set({ roomCode: code.toUpperCase() }),
   addScore: (playerId, delta) =>
     set((s) => ({
-      players: s.players.map((p) => (p.id === playerId ? { ...p, score: p.score + delta } : p)),
+      players: s.players.map((p) =>
+        p.id === playerId ? { ...p, score: p.score + delta } : p
+      ),
     })),
 }));

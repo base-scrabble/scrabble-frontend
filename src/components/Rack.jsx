@@ -1,23 +1,28 @@
-export default function Rack({ tiles = [], onPlay, disabled }) {
+import Tile from "./Tile";
+import { useGameStore } from "../store/gameStore";
+import { getSocket } from "../services/socketService";
+import { calculateScrabbleScore } from "../utils/scoreCalculator";
+
+export default function Rack({ tiles, onPlay, disabled }) {
+  const { players, addScore } = useGameStore();
+
   const handlePlay = (tile) => {
-    if (disabled) return;
-    onPlay({ tile });
+    if (!disabled && onPlay) {
+      onPlay(tile);
+      addScore(players[0].id, calculateScrabbleScore(tile));
+      getSocket()?.emit("game:move", { tile });
+    }
   };
 
   return (
-    <div className="flex space-x-2 mt-4">
-      {tiles.map((t, idx) => (
-        <button
+    <div className="flex gap-2 p-2 bg-gray-100 rounded">
+      {(tiles || []).map((tile, idx) => (
+        <Tile
           key={idx}
-          className="w-10 h-10 bg-yellow-200 border rounded flex flex-col items-center justify-center font-bold shadow"
-          onClick={() => handlePlay(t)}
-          disabled={disabled}
-        >
-          <span>{t.letter || t}</span>
-          {t.points !== undefined && (
-            <span className="text-xs font-normal">{t.points}</span>
-          )}
-        </button>
+          value={tile}
+          onPlace={() => handlePlay(tile)}
+          className="w-8 h-8 flex items-center justify-center bg-white border text-sm font-bold"
+        />
       ))}
     </div>
   );

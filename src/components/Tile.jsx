@@ -1,11 +1,15 @@
-export default function Tile({ letter, points, onClick }) {
+import { calculateScrabbleScore } from "../utils/scoreCalculator";
+
+export default function Tile({ value, onPlace, className }) {
+  const score = value ? calculateScrabbleScore(value) : 0;
+
   return (
-    <button
-      onClick={onClick}
-      className="w-10 h-10 bg-yellow-200 border rounded flex flex-col items-center justify-center font-bold hover:bg-yellow-300"
+    <div
+      className={`${className} ${value ? "bg-blue-100" : "bg-white"} cursor-pointer`}
+      onClick={onPlace}
     >
-      <span>{letter}</span>
-      <span className="text-xs">{points}</span>
-    </button>
+      {value || ""}
+      {value && <span className="text-xs">({score})</span>}
+    </div>
   );
 }
