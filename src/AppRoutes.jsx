@@ -1,5 +1,5 @@
 // src/AppRoutes.jsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   BrowserRouter,
   Routes,
@@ -24,9 +24,15 @@ import CreateGame from "./components/CreateGame";
 import JoinGame from "./components/JoinGame";
 import WaitingRoom from "./components/WaitingRoom";
 import PlayGame from "./components/PlayGame";
-import Header from "./components/Header"; // optional — Layout might already include header
-import Footer from "./components/Footer"; // optional
-import ApiTest from "./components/ApiTest";
+import { API_BASE_URL } from "./config";
+import { getSocket } from "./services/socketService";
+import {
+  getSessionItem,
+  setSessionItem,
+  removeSessionItem,
+  getSessionJSON,
+  setSessionJSON,
+} from "./utils/session";
 
 export default function AppRoutes() {
   return (
@@ -38,30 +44,15 @@ export default function AppRoutes() {
 
 function AppRoutesInner() {
   const navigate = useNavigate();
+  const leavingRef = useRef(false);
+  const gameDataRef = useRef(null);
 
-  // playerName (string) and gameData (object from backend)
-  const [playerName, setPlayerName] = useState(
-    () => sessionStorage.getItem("playerName") || ""
-  );
-
-  const [gameData, setGameData] = useState(() => {
-    try {
-      const raw = sessionStorage.getItem("gameData");
-      return raw ? JSON.parse(raw) : null;
-    } catch (e) {
-      return null;
-    }
-  });
-
-  // persist to sessionStorage so refresh doesn't kill the flow
-  useEffect(() => {
-    if (playerName) sessionStorage.setItem("playerName", playerName);
-    else sessionStorage.removeItem("playerName");
-  }, [playerName]);
+  const [gameData, setGameData] = useState(() => getSessionJSON("gameData"));
 
   useEffect(() => {
-    if (gameData) sessionStorage.setItem("gameData", JSON.stringify(gameData));
-    else sessionStorage.removeItem("gameData");
+    gameDataRef.current = gameData;
+    if (gameData) setSessionJSON("gameData", gameData);
+    else removeSessionItem("gameData");
   }, [gameData]);
 
   // Called by CreateGame component (onCreate)
@@ -73,7 +64,7 @@ function AppRoutesInner() {
 
     // fallback: CreateGame passed playerName string only
     if (typeof data === "string") {
-      setPlayerName(data);
+      setSessionItem('playerName', data);
       // If CreateGame only sent a name, we don't have gameId to navigate to.
       // The CreateGame we replaced earlier *does* call the backend and passes the response object,
       // so this branch should be rare. If you hit this, consider updating CreateGame
@@ -82,10 +73,19 @@ function AppRoutesInner() {
     }
 
     // expected object from backend
-    if (data.playerName) setPlayerName(data.playerName);
-    setGameData(data);
+    if (data.playerName) {
+      setSessionItem('playerName', data.playerName);
+      console.log('💾 Stored playerName in sessionStorage:', data.playerName);
+    }
+    setGameData((prev) => ({
+      ...(prev || {}),
+      ...data,
+      gameId: data.gameId || prev?.gameId,
+    }));
 
     if (data.gameId) {
+      setSessionItem('currentGameId', data.gameId);
+      console.log('💾 Stored gameId in sessionStorage:', data.gameId);
       navigate(`/waiting/${data.gameId}`);
     } else {
       // safety: if create returned no id, stay on page but show created data
@@ -96,26 +96,104 @@ function AppRoutesInner() {
   // Called when someone joins a game (WaitingRoom or Join flows)
   const handleJoin = (data) => {
     if (!data) return;
-    setGameData(data);
-    if (data.gameId) navigate(`/waiting/${data.gameId}`);
+    console.log('🔵 handleJoin called with data:', data);
+    setGameData((prev) => ({
+      ...(prev || {}),
+      ...data,
+      gameId: data.gameId || prev?.gameId,
+    }));
+    if (data.playerName) {
+      setSessionItem('playerName', data.playerName);
+      console.log('💾 Stored playerName in sessionStorage:', data.playerName);
+    }
+    if (data.gameId) {
+      setSessionItem('currentGameId', data.gameId);
+      console.log('💾 Stored gameId in sessionStorage:', data.gameId);
+      navigate(`/waiting/${data.gameId}`);
+    }
   };
 
   // Called by WaitingRoom when game actually starts (server/host starts the match)
   const handleStart = (newState = {}) => {
     // attach new state to gameData and navigate to game board
-    setGameData((prev) => {
-      const merged = { ...(prev || {}), state: newState };
-      // navigate after state is applied
-      if (merged.gameId) navigate(`/game/${merged.gameId}`);
-      return merged;
-    });
+    const merged = {
+      ...(gameData || {}),
+      state: newState,
+      status: 'active',
+      gameId: newState.gameId || gameData?.gameId,
+    };
+    setGameData(merged);
+    if (merged.gameId) navigate(`/game/${merged.gameId}`);
   };
 
   // Called to clear current game (leave / finish)
-  const clearGame = () => {
-    setGameData(null);
-    // optionally navigate to home
-    navigate("/");
+  const clearGame = async (gameIdParam) => {
+    if (leavingRef.current) {
+      console.log('⏭️ clearGame skipped - already processing a leave request');
+      return;
+    }
+    leavingRef.current = true;
+    // ALWAYS read fresh from sessionStorage - React state may be stale after navigation
+    const storedPlayerName = getSessionItem('playerName');
+    const storedGameId = getSessionItem('currentGameId');
+    const activeGameData = gameDataRef.current;
+    const gameId = gameIdParam || activeGameData?.gameId || storedGameId;
+    const player = storedPlayerName;
+    
+    console.log('🚪 clearGame - gameId:', gameId, 'player:', player);
+    
+    // Call backend to leave game if we have both
+    try {
+      const activeSocket = getSocket();
+      if (activeSocket && gameId && player) {
+        try {
+          activeSocket.emit('game:leave', { gameId, playerName: player });
+        } catch (socketErr) {
+          console.warn('⚠️ Failed to emit game:leave', socketErr);
+        }
+      }
+
+      if (gameId && player) {
+        try {
+          const leaveUrl = `${API_BASE_URL}/gameplay/${gameId}/leave`;
+          console.log(`🚪 Leaving game ${gameId} as ${player}`);
+          console.log(`🚪 Fetching URL: ${leaveUrl}`);
+          console.log(`🚪 Request body:`, { playerName: player });
+          
+          const response = await fetch(leaveUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ playerName: player })
+          });
+          
+          console.log(`🚪 Response status: ${response.status}`, response);
+          
+          if (response.ok) {
+            const result = await response.json();
+            console.log('✅ Successfully left game:', result);
+          } else {
+            const error = await response.json();
+            console.error('❌ Failed to leave game:', error);
+          }
+        } catch (err) {
+          console.error('❌ Error leaving game:', err);
+        }
+      } else {
+        console.warn('⚠️ Cannot leave game - missing gameId or playerName');
+      }
+      
+      // Clear React state
+      setGameData(null);
+      
+      // ONLY clear sessionStorage on explicit user exit
+      // DON'T use sessionStorage.clear() - it clears everything
+      removeSessionItem('currentGameId');
+      removeSessionItem('gameData');
+      
+      navigate("/");
+    } finally {
+      leavingRef.current = false;
+    }
   };
 
   return (
@@ -123,22 +201,36 @@ function AppRoutesInner() {
       <Routes>
         {/* Home / Create page */}
         <Route
-  path="/"
-  element={
-    <div className="container mx-auto p-4">
-      <CreateGame onCreate={handleCreate} />
-      <JoinGame onJoin={handleJoin} /> {/* ✅ added */}
-      <ApiTest />
-    </div>
-  }
-/>
+          path="/"
+          element={
+            <div className="max-w-5xl mx-auto p-4 space-y-6">
+              <section className="rounded-3xl bg-gradient-to-r from-slate-900 to-slate-800 text-white p-6 shadow-xl">
+                <p className="text-sm uppercase tracking-[0.3em] text-sky-300">Live beta</p>
+                <h1 className="text-3xl font-black mt-2">Spin up a room or join an existing match.</h1>
+                <p className="text-slate-200 mt-2">
+                  Share the same name across both cards so you stay synced between create and join.
+                </p>
+              </section>
+              <div className="grid gap-6 lg:grid-cols-2">
+                <CreateGame
+                  onCreate={handleCreate}
+                />
+                <JoinGame
+                  onJoin={handleJoin}
+                />
+              </div>
+            </div>
+          }
+        />
 
         {/* Explicit Create route (optional) */}
         <Route
           path="/create"
           element={
             <div className="container mx-auto p-4">
-              <CreateGame onCreate={handleCreate} />
+              <CreateGame
+                onCreate={handleCreate}
+              />
             </div>
           }
         />
@@ -147,7 +239,9 @@ function AppRoutesInner() {
           path="/join"
           element={
             <div className="container mx-auto p-4">
-              <JoinGame onJoin={handleJoin} />
+              <JoinGame
+                onJoin={handleJoin}
+              />
             </div>
           }
         />
@@ -161,7 +255,7 @@ function AppRoutesInner() {
               setGameData={setGameData}
               onStart={handleStart}
               onJoin={handleJoin}
-              setPlayerName={setPlayerName}
+              onExit={clearGame}
             />
           }
         />
@@ -173,7 +267,6 @@ function AppRoutesInner() {
             <PlayGameWrapper
               gameData={gameData}
               setGameData={setGameData}
-              playerName={playerName}
               clearGame={clearGame}
             />
           }
@@ -184,7 +277,9 @@ function AppRoutesInner() {
           path="*"
           element={
             <div className="container mx-auto p-4">
-              <CreateGame onCreate={handleCreate} />
+              <CreateGame
+                onCreate={handleCreate}
+              />
             </div>
           }
         />
@@ -197,7 +292,7 @@ function AppRoutesInner() {
    Route wrappers (read params + pass props)
    ------------------------- */
 
-function WaitingRoomWrapper({ gameData, setGameData, onStart, onJoin, setPlayerName }) {
+function WaitingRoomWrapper({ gameData, setGameData, onStart, onJoin, onExit }) {
   const params = useParams();
   const navigate = useNavigate();
   const { gameId } = params;
@@ -205,15 +300,23 @@ function WaitingRoomWrapper({ gameData, setGameData, onStart, onJoin, setPlayerN
   // helper passed down to actual WaitingRoom component
   const handleLocalStart = (state) => {
     // update gameData and navigate to game
-    setGameData((prev) => ({ ...(prev || {}), state }));
+    setGameData((prev) => ({
+      ...(prev || {}),
+      state,
+      status: 'active',
+      gameId: state?.gameId || prev?.gameId || gameId,
+    }));
     if (gameId) navigate(`/game/${gameId}`);
     if (typeof onStart === "function") onStart(state);
   };
 
-  const handleLocalJoin = (data) => {
-    setGameData(data);
-    if (data?.playerName) setPlayerName(data.playerName);
-    if (typeof onJoin === "function") onJoin(data);
+  const handleLocalJoin = (data = {}) => {
+    setGameData((prev) => ({
+      ...(prev || {}),
+      ...data,
+      gameId: data.gameId || prev?.gameId || gameId,
+    }));
+    if (typeof onJoin === "function") onJoin({ ...data, gameId: data.gameId || gameId });
   };
 
   return (
@@ -221,15 +324,18 @@ function WaitingRoomWrapper({ gameData, setGameData, onStart, onJoin, setPlayerN
       <WaitingRoom
         gameId={gameId}
         gameData={gameData}
+        setGameData={setGameData}
         onStart={handleLocalStart}
         onJoin={handleLocalJoin}
+        onExit={() => onExit(gameId)}
       />
     </div>
   );
 }
 
-function PlayGameWrapper({ gameData, setGameData, playerName, clearGame }) {
+function PlayGameWrapper({ gameData, setGameData, clearGame }) {
   const { gameId } = useParams();
+  const storedName = getSessionItem('playerName', '');
 
   return (
     <div className="p-2">
@@ -237,8 +343,8 @@ function PlayGameWrapper({ gameData, setGameData, playerName, clearGame }) {
         gameId={gameId}
         gameData={gameData}
         setGameData={setGameData}
-        playerName={playerName}
-        onExit={clearGame}
+        playerName={storedName}
+        onExit={() => clearGame(gameId)}
       />
     </div>
   );

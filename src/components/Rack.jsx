@@ -1,29 +1,59 @@
 import Tile from "./Tile";
-import { useGameStore } from "../store/gameStore";
-import { getSocket } from "../services/socketService";
-import { calculateScrabbleScore } from "../utils/scoreCalculator";
 
-export default function Rack({ tiles, onPlay, disabled }) {
-  const { players, addScore } = useGameStore();
-
-  const handlePlay = (tile) => {
-    if (!disabled && onPlay) {
-      onPlay(tile);
-      addScore(players[0].id, calculateScrabbleScore(tile));
-      getSocket()?.emit("game:move", { tile });
+export default function Rack({
+  tiles = [],
+  selectedIndex,
+  exchangeMode = false,
+  exchangeSelection = [],
+  onSelectTile,
+  onToggleExchangeSelection,
+  disabled,
+  canDrop = false,
+}) {
+  const handleTileClick = (idx, tile) => {
+    if (disabled) return;
+    if (exchangeMode) {
+      if (!tile) return;
+      onToggleExchangeSelection?.(idx);
+      return;
     }
+    if (!tile && !canDrop) return;
+    onSelectTile?.(idx);
   };
 
   return (
-    <div className="flex gap-2 p-2 bg-gray-100 rounded">
-      {(tiles || []).map((tile, idx) => (
-        <Tile
-          key={idx}
-          value={tile}
-          onPlace={() => handlePlay(tile)}
-          className="w-8 h-8 flex items-center justify-center bg-white border text-sm font-bold"
-        />
-      ))}
+    <div className="rack__wrapper" data-exchange-mode={exchangeMode || undefined}>
+      {(tiles || []).map((tile, idx) => {
+        const tileValue = tile?.letter || (typeof tile === "string" ? tile : null);
+        const isBlank = Boolean(tile?.isBlank || tileValue === "?");
+        const tileScore = typeof tile?.value === "number" ? tile.value : undefined;
+        const isExchangeSelected = exchangeMode && exchangeSelection.includes(idx);
+        const isSelected = exchangeMode ? isExchangeSelected : selectedIndex === idx;
+        const isEmpty = !tileValue;
+        const tileClass = [
+          "rack__tile",
+          isSelected ? "rack__tile--selected" : "",
+          isExchangeSelected ? "rack__tile--exchange" : "",
+          isEmpty ? "rack__tile--empty" : "",
+        ]
+          .join(" ")
+          .trim();
+        const shouldDisable =
+          disabled ||
+          (exchangeMode && !tileValue) ||
+          (!tileValue && !canDrop);
+        return (
+          <Tile
+            key={`${tileValue || "blank"}-${idx}-${isBlank ? "blank" : "letter"}`}
+            value={tileValue}
+            isBlank={isBlank}
+            scoreValue={tileScore}
+            onPlace={() => handleTileClick(idx, tile)}
+            className={tileClass}
+            disabled={shouldDisable}
+          />
+        );
+      })}
     </div>
   );
 }

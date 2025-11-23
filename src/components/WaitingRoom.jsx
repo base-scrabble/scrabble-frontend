@@ -1,96 +1,398 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getGameState, joinGame, startGame } from "../api/gameApi";
 import { connectSocket, getSocket } from "../services/socketService";
+import { getSessionItem } from "../utils/session";
+import { extractGamePayload, resolveGameId } from "../utils/gamePayload";
 
-export default function WaitingRoom({ gameId, gameData, onStart, onJoin, onEnd }) {
-  const [players, setPlayers] = useState(() =>
-    (gameData?.players || []).map(p => typeof p === "string" ? { name: p, score: 0 } : p)
+const normalizePlayers = (players = []) =>
+  players.map((p, idx) =>
+    typeof p === "string"
+      ? { name: p, score: 0, playerNumber: idx + 1 }
+      : { ...p, score: p.score || 0, playerNumber: p.playerNumber || idx + 1 }
   );
+
+const getHostName = (players = []) => {
+  if (!players.length) return null;
+  const playerOne = players.find((p) => (p.playerNumber || 0) === 1);
+  return (playerOne || players[0]).name || null;
+};
+
+export default function WaitingRoom({ gameId, gameData, setGameData, onStart, onJoin, onExit }) {
+  const [players, setPlayers] = useState(() => normalizePlayers(gameData?.players));
+  const [status, setStatus] = useState(gameData?.status || "waiting");
+  const [gameCode, setGameCode] = useState(gameData?.gameCode || "");
+  const [copied, setCopied] = useState(false);
+  const [copiedId, setCopiedId] = useState(false);
   const [loading, setLoading] = useState(false);
+  const hasEnteredGameRef = useRef(false);
   const navigate = useNavigate();
+  const storedName = getSessionItem('playerName', '');
+  const storedGameId = getSessionItem('currentGameId', '');
+  const resolvedGameId = gameId || gameData?.gameId || storedGameId || '';
+  const displayGameId = resolvedGameId || '—';
+  const hostName = getHostName(players);
+  const isHostClient = storedName && hostName
+    ? hostName.toLowerCase() === storedName.toLowerCase()
+    : false;
+  const enoughPlayers = players.length >= 2;
+  const canStart = isHostClient && enoughPlayers && !loading;
+  const waitingOnHost = !isHostClient && enoughPlayers;
 
   useEffect(() => {
-    if (!gameId) return;
-    const socket = connectSocket(import.meta.env.VITE_SOCKET_URL);
+    hasEnteredGameRef.current = false;
+  }, [resolvedGameId]);
+
+  const navigateToGame = useCallback((reason = 'unknown', payload = {}) => {
+    const targetGameId = payload.gameId || resolvedGameId;
+    if (!targetGameId) {
+      console.warn('⚠️ Unable to navigate to game - missing game id');
+      return;
+    }
+    if (hasEnteredGameRef.current) return;
+    hasEnteredGameRef.current = true;
+
+    const startPayload = {
+      state: payload.state || payload.status || 'active',
+      gameId: targetGameId,
+      reason,
+      ...payload,
+    };
+
+    if (typeof onStart === 'function') {
+      onStart(startPayload);
+    }
+    navigate(`/game/${targetGameId}`);
+  }, [resolvedGameId, navigate, onStart]);
+
+  const applyGamePayload = (raw, reason = 'update') => {
+    const payload = extractGamePayload(raw);
+    if (!payload) {
+      console.warn(`⚠️ No game payload available for reason: ${reason}`);
+      return null;
+    }
+    const normalizedPlayers = normalizePlayers(payload.players);
+    const payloadGameId = resolveGameId(payload, resolvedGameId || gameId);
+    setPlayers(normalizedPlayers);
+    setStatus(payload.status || 'waiting');
+    if (payload.gameCode || !gameCode) {
+      setGameCode(payload.gameCode || '');
+    }
+    if (typeof setGameData === 'function') {
+      setGameData((prev) => ({
+        ...(prev || {}),
+        ...payload,
+        gameId: payloadGameId || prev?.gameId || resolvedGameId || gameId,
+        players: normalizedPlayers,
+      }));
+    }
+    return payload;
+  };
+
+  useEffect(() => {
+    if (Array.isArray(gameData?.players)) {
+      setPlayers(normalizePlayers(gameData.players));
+    }
+    if (gameData?.status) {
+      setStatus(gameData.status);
+    }
+    if (gameData?.gameCode) {
+      setGameCode(gameData.gameCode);
+    }
+  }, [gameData]);
+
+  useEffect(() => {
+    if (!resolvedGameId) return;
+    
+    // Get playerName from storage helper to avoid runtime errors
+    const actualPlayerName = getSessionItem('playerName', 'Guest');
+    
+    const socketUrl = import.meta.env.DEV ? undefined : import.meta.env.VITE_SOCKET_URL;
+    const socket = connectSocket(socketUrl);
     if (!socket) return;
 
+    const syncFromServer = async (reason = 'socket-event') => {
+      try {
+        applyGamePayload(await getGameState(resolvedGameId), reason);
+      } catch (err) {
+        console.error(`❌ Failed to sync waiting room (${reason}):`, err);
+      }
+    };
+
+    syncFromServer('initial-load');
+
     const handleJoin = (data) => {
-      setPlayers(data.players);
-      if (onJoin) onJoin(data);
+      console.log('👥 player join event:', data);
+      syncFromServer('player-joined');
     };
 
-    const handleStart = (data) => {
-      if (data.state === "active") {
-        if (onStart) onStart(data);
-        navigate(`/game/${gameId}`);
+    const handleSocketStart = (data = {}) => {
+      console.log("🎮 Received game:start event:", data);
+      const statusFromPayload = data.state || data.status;
+      if (statusFromPayload !== 'active' && data.force !== true) {
+        return;
       }
+      navigateToGame('socket-start', {
+        ...data,
+        gameId: data.gameId || resolvedGameId,
+        state: statusFromPayload || 'active',
+      });
     };
 
-    const handleEnd = (data) => {
-      if (data.state === "completed") {
-        if (onEnd) onEnd(data);
-        navigate(`/results/${gameId}`);
+    const handlePlayerJoin = (data) => {
+      console.log("👤 Player joined:", data);
+      syncFromServer('player-joined');
+    };
+
+    const handlePlayerLeave = (data) => {
+      console.log("🚪 Player left waiting room:", data.playerName);
+      syncFromServer('player-left');
+    };
+
+    const handleConnect = () => {
+      if (!resolvedGameId || !actualPlayerName) return;
+      console.log("🔌 Socket connected to game room:", resolvedGameId, "as", actualPlayerName);
+      socket.emit("game:join", { gameId: resolvedGameId, playerName: actualPlayerName });
+    };
+
+    socket.on("connect", handleConnect);
+    if (socket.connected) {
+      handleConnect();
+    }
+    
+    socket.on("player:joined", handlePlayerJoin);
+    socket.on("game:join", handlePlayerJoin); // Alias
+    socket.on("game:start", handleSocketStart);
+    socket.on("game:state", handleSocketStart);
+    socket.on("player:left", handlePlayerLeave);
+    socket.on("game:leave", handlePlayerLeave); // Alias
+
+    // ONLY polling in WaitingRoom - stops once game becomes active
+    let pollingStopped = false;
+    const pollInterval = setInterval(async () => {
+      if (pollingStopped) return;
+      
+      try {
+        const payload = applyGamePayload(await getGameState(resolvedGameId), 'polling');
+        const gameStatus = payload?.status;
+        console.log(`📊 Polling game ${resolvedGameId}, status:`, gameStatus);
+        
+        if (gameStatus === "active") {
+          console.log("✅ Game started - stopping polling and navigating");
+          pollingStopped = true;
+          clearInterval(pollInterval);
+          navigateToGame('polling-active', { state: 'active', gameId: resolvedGameId });
+        }
+      } catch (err) {
+        console.error("❌ Polling error:", err);
       }
-    };
-
-    socket.on("connect", () => socket.emit("game:join", { gameId, playerName: "Guest" }));
-    socket.on("game:join", handleJoin);
-    socket.on("game:start", handleStart);
-    socket.on("game:state", handleStart);
-    socket.on("game:leave", handleJoin);
+    }, 10000);
 
     return () => {
-      socket.off("game:join", handleJoin);
-      socket.off("game:start", handleStart);
-      socket.off("game:state", handleStart);
-      socket.off("game:leave", handleJoin);
-      socket.disconnect();
+      pollingStopped = true;
+      clearInterval(pollInterval);
+      socket.off("connect", handleConnect);
+      socket.off("player:joined", handlePlayerJoin);
+      socket.off("game:join", handlePlayerJoin);
+      socket.off("game:start", handleSocketStart);
+      socket.off("game:state", handleSocketStart);
+      socket.off("player:left", handlePlayerLeave);
+      socket.off("game:leave", handlePlayerLeave);
+      // Don't disconnect - keep socket alive
     };
-  }, [gameId, onStart, onJoin, onEnd, navigate]);
+  }, [resolvedGameId, onStart, onJoin, navigate, setGameData, navigateToGame]);
+
+  useEffect(() => {
+    if (status === 'active') {
+      navigateToGame('status-sync', { state: 'active', gameId: resolvedGameId });
+    }
+  }, [status, navigateToGame, resolvedGameId]);
 
   const handleJoin = async () => {
+    if (!storedName) {
+      alert('Please enter your name again on the home screen before joining.');
+      return;
+    }
     setLoading(true);
     try {
-      const data = await joinGame(gameId, "Guest");
-      setPlayers(data.players);
-      if (onJoin) onJoin(data);
-      getSocket()?.emit("game:join", { gameId, playerName: "Guest" });
+      if (!resolvedGameId) {
+        throw new Error('Missing game identifier. Please recreate or rejoin the match.');
+      }
+      const payload = applyGamePayload(await joinGame(resolvedGameId, storedName), 'join');
+      if (!payload) {
+        throw new Error('Unable to sync game state after joining.');
+      }
+      if (onJoin) onJoin({ ...payload, playerName: storedName });
+      getSocket()?.emit("game:join", { gameId: resolvedGameId, playerName: storedName });
     } catch (err) {
-      alert(`Error joining game: ${err.message}`);
+      const message = err?.response?.data?.message || err?.message || 'Unable to join game';
+      alert(`Error joining game: ${message}`);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleStart = async () => {
+  const handleHostStart = async () => {
+    if (!isHostClient) {
+      alert('Only Player 1 can start the game once everyone is ready.');
+      return;
+    }
+    if (players.length < 2) {
+      alert('You need at least two players to start the game.');
+      return;
+    }
     setLoading(true);
     try {
-      const data = await startGame(gameId);
-      if (onStart) onStart(data);
-      getSocket()?.emit("game:start", { gameId });
-      navigate(`/game/${gameId}`);
+      // Call HTTP API to update game status in database
+      if (!resolvedGameId) {
+        throw new Error('Missing game identifier. Please recreate or rejoin the match.');
+      }
+      await startGame(resolvedGameId);
+      // Socket event will be emitted by backend to all players
+      navigateToGame('host-start', { gameId: resolvedGameId, state: 'active' });
     } catch (err) {
-      alert(`Error starting game: ${err.message}`);
+      const message = err?.response?.data?.message || err?.message || 'Unable to start game';
+      alert(`Error starting game: ${message}`);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const inviteLink = typeof window !== 'undefined' && resolvedGameId
+    ? `${window.location.origin}/waiting/${resolvedGameId}`
+    : '';
+
+  const copyInviteLink = async () => {
+    if (!inviteLink) return;
+    if (typeof navigator === 'undefined' || !navigator.clipboard?.writeText) {
+      alert('Clipboard access is unavailable. Please copy the link manually.');
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(inviteLink);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('❌ Unable to copy invite link:', err);
+      alert('Unable to copy link. You can highlight it and copy manually.');
+    }
+  };
+
+  const copyGameId = async () => {
+    if (!resolvedGameId) return;
+    if (typeof navigator === 'undefined' || !navigator.clipboard?.writeText) {
+      alert('Clipboard access is unavailable. Please copy the ID manually.');
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(resolvedGameId);
+      setCopiedId(true);
+      setTimeout(() => setCopiedId(false), 2000);
+    } catch (err) {
+      console.error('❌ Unable to copy game id:', err);
+      alert('Unable to copy game ID. You can highlight it and copy manually.');
     }
   };
 
   return (
-    <div className="p-4 bg-white rounded shadow">
-      <h2 className="font-bold mb-2">Waiting Room</h2>
-      <p>Game ID: {gameId}</p>
-      <ul className="list-disc pl-6 mb-4">
-        {players.map((p, idx) => (
-          <li key={idx}>{p.name} <span className="text-gray-500">({p.score} pts)</span></li>
-        ))}
-      </ul>
-      <button onClick={handleJoin} className="mt-2 bg-green-600 text-white px-4 py-2 rounded disabled:opacity-50" disabled={loading}>
-        {loading ? "Joining..." : "Join Game"}
-      </button>
-      <button onClick={handleStart} className="mt-2 bg-blue-600 text-white px-4 py-2 rounded disabled:opacity-50" disabled={loading}>
-        {loading ? "Starting..." : "Start Game"}
+    <div className="waiting-room">
+      <div className="waiting-room__header">
+        <div>
+          <p className="waiting-room__eyebrow">Waiting Room</p>
+          <h2 className="waiting-room__title">Get everyone in before launch</h2>
+        </div>
+        <span className="waiting-room__status" data-state={status}>{status}</span>
+      </div>
+
+      <div className="waiting-room__meta">
+        <div className="waiting-room__meta-card">
+          <p className="waiting-room__meta-label">Game ID</p>
+          <p className="waiting-room__meta-value">{displayGameId}</p>
+          <button type="button" className="waiting-room__meta-copy" onClick={copyGameId}>
+            {copiedId ? 'Copied' : 'Copy ID'}
+          </button>
+        </div>
+        <div className="waiting-room__meta-card">
+          <p className="waiting-room__meta-label">Game Code</p>
+          <p className="waiting-room__meta-value">{gameCode || '—'}</p>
+        </div>
+      </div>
+
+      <div className="waiting-room__share">
+        <label className="waiting-room__share-label" htmlFor="invite-link">Invite link</label>
+        <div className="waiting-room__share-row">
+          <input
+            id="invite-link"
+            type="text"
+            readOnly
+            value={inviteLink}
+            className="waiting-room__share-input"
+          />
+          <button
+            onClick={copyInviteLink}
+            type="button"
+            className="waiting-room__share-button"
+          >
+            {copied ? 'Copied!' : 'Copy Link'}
+          </button>
+        </div>
+      </div>
+
+      <div className="waiting-room__players">
+        <div className="waiting-room__players-header">
+          <p>Players</p>
+          <span>{players.length || 0} joined</span>
+        </div>
+        <ul className="waiting-room__player-list">
+          {players.map((p, idx) => (
+            <li key={idx} className="waiting-room__player">
+              <div>
+                <span className="waiting-room__player-name">{p.name}</span>
+                <span className="waiting-room__player-meta">Score: {p.score}</span>
+              </div>
+              <span className="waiting-room__player-number">#{p.playerNumber || idx + 1}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <div className="waiting-room__actions">
+        <button
+          onClick={handleJoin}
+          className="waiting-room__button waiting-room__button--outline"
+          disabled={loading}
+        >
+          {loading ? "Joining..." : "Join Game"}
+        </button>
+        <button
+          onClick={handleHostStart}
+          className={`waiting-room__button waiting-room__button--primary${canStart ? '' : ' is-disabled'}`}
+          disabled={!canStart}
+        >
+          {isHostClient ? (loading ? "Starting..." : "Start Game") : "Waiting for Host"}
+        </button>
+      </div>
+
+      <div className="waiting-room__hints">
+        {!enoughPlayers && (
+          <p className="waiting-room__hint waiting-room__hint--warn">
+            Need at least two players in the room.
+          </p>
+        )}
+        {waitingOnHost && (
+          <p className="waiting-room__hint">
+            {hostName || 'Player 1'} has to start the match.
+          </p>
+        )}
+        {isHostClient && enoughPlayers && (
+          <p className="waiting-room__hint waiting-room__hint--success">
+            You're the host — start whenever everyone's ready.
+          </p>
+        )}
+      </div>
+
+      <button onClick={onExit} className="waiting-room__button waiting-room__button--danger">
+        Exit Lobby
       </button>
     </div>
   );

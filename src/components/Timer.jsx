@@ -2,15 +2,16 @@ import { useEffect, useState } from "react";
 import { getSocket } from "../services/socketService";
 import { useGameStore } from "../store/gameStore";
 
-export default function Timer() {
+export default function Timer({ status }) {
   const { minutesPerSide } = useGameStore();
-  const [timeLeft, setTimeLeft] = useState(minutesPerSide * 60);
+  const defaultSeconds = (minutesPerSide || 0) * 60;
+  const [timeLeft, setTimeLeft] = useState(defaultSeconds);
 
   useEffect(() => {
     const socket = getSocket();
     if (socket) {
       socket.on("game:state", (data) => {
-        if (data.timeLeft) setTimeLeft(data.timeLeft);
+        if (typeof data.timeLeft === "number") setTimeLeft(data.timeLeft);
       });
     }
 
@@ -18,15 +19,28 @@ export default function Timer() {
       setTimeLeft((prev) => (prev > 0 ? prev - 1 : 0));
     }, 1000);
 
-    return () => clearInterval(timer);
+    return () => {
+      clearInterval(timer);
+      socket?.off?.("game:state");
+    };
   }, []);
+
+  useEffect(() => {
+    setTimeLeft((minutesPerSide || 0) * 60);
+  }, [minutesPerSide]);
 
   const minutes = Math.floor(timeLeft / 60);
   const seconds = timeLeft % 60;
+  const formattedSeconds = seconds < 10 ? `0${seconds}` : seconds;
+  const isCritical = timeLeft <= 30;
 
   return (
-    <div className="text-lg font-bold">
-      Time Left: {minutes}:{seconds < 10 ? `0${seconds}` : seconds}
+    <div className={`timer ${isCritical ? "timer--critical" : ""}`}>
+      <p className="timer__label">Clock</p>
+      <p className="timer__value">
+        {minutes}:{formattedSeconds}
+      </p>
+      <p className="timer__status">Status: {status || "active"}</p>
     </div>
   );
 }
