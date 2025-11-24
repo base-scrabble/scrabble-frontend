@@ -5,6 +5,10 @@ import { connectSocket, getSocket } from "../services/socketService";
 import { getSessionItem } from "../utils/session";
 import { extractGamePayload, resolveGameId } from "../utils/gamePayload";
 
+const MIN_POLL_INTERVAL_MS = 3000;
+const DEFAULT_POLL_INTERVAL_MS = 4000;
+const RATE_LIMIT_BACKOFF_MS = 5000;
+
 const normalizePlayers = (players = []) =>
   players.map((p, idx) =>
     typeof p === "string"
@@ -103,28 +107,95 @@ export default function WaitingRoom({ gameId, gameData, setGameData, onStart, on
 
   useEffect(() => {
     if (!resolvedGameId) return;
-    
-    // Get playerName from storage helper to avoid runtime errors
+
     const actualPlayerName = getSessionItem('playerName', 'Guest');
-    
     const socketUrl = import.meta.env.DEV ? undefined : import.meta.env.VITE_SOCKET_URL;
     const socket = connectSocket(socketUrl);
     if (!socket) return;
 
-    const syncFromServer = async (reason = 'socket-event') => {
-      try {
-        applyGamePayload(await getGameState(resolvedGameId), reason);
-      } catch (err) {
-        console.error(`❌ Failed to sync waiting room (${reason}):`, err);
+    const pollState = {
+      timeoutId: null,
+      isFetching: false,
+      nextAllowedAt: Date.now(),
+      stopped: false,
+      pendingReason: null,
+    };
+
+    const clearPollTimer = () => {
+      if (pollState.timeoutId) {
+        clearTimeout(pollState.timeoutId);
+        pollState.timeoutId = null;
       }
     };
 
-    syncFromServer('initial-load');
-
-    const handleJoin = (data) => {
-      console.log('👥 player join event:', data);
-      syncFromServer('player-joined');
+    const stopPolling = () => {
+      pollState.stopped = true;
+      pollState.pendingReason = null;
+      clearPollTimer();
     };
+
+    const schedulePoll = (delay = DEFAULT_POLL_INTERVAL_MS, { clampToMin = true, reason = 'scheduled' } = {}) => {
+      if (pollState.stopped) return;
+      const safeDelay = Math.max(delay, 0);
+      const finalDelay = clampToMin ? Math.max(safeDelay, MIN_POLL_INTERVAL_MS) : safeDelay;
+      clearPollTimer();
+      pollState.timeoutId = setTimeout(() => {
+        pollState.timeoutId = null;
+        fetchLatestState(reason);
+      }, finalDelay);
+    };
+
+    const fetchLatestState = async (reason = 'auto') => {
+      if (pollState.stopped || !resolvedGameId) return;
+      if (pollState.isFetching) {
+        pollState.pendingReason = reason;
+        return;
+      }
+
+      const now = Date.now();
+      if (now < pollState.nextAllowedAt) {
+        schedulePoll(pollState.nextAllowedAt - now, { clampToMin: false, reason });
+        return;
+      }
+
+      pollState.isFetching = true;
+      let nextDelay = DEFAULT_POLL_INTERVAL_MS;
+
+      try {
+        const payload = await getGameState(resolvedGameId);
+        pollState.nextAllowedAt = Date.now() + DEFAULT_POLL_INTERVAL_MS;
+        const normalized = applyGamePayload(payload, reason);
+        if (normalized?.status === 'active') {
+          stopPolling();
+          navigateToGame('polling-active', { state: 'active', gameId: resolvedGameId });
+          return;
+        }
+      } catch (err) {
+        const statusCode = err?.response?.status || err?.status;
+        if (statusCode === 429) {
+          pollState.nextAllowedAt = Date.now() + RATE_LIMIT_BACKOFF_MS;
+          nextDelay = RATE_LIMIT_BACKOFF_MS;
+          console.warn('⚠️ Rate limit hit while syncing waiting room. Backing off before retrying.', err?.message || '');
+        } else {
+          pollState.nextAllowedAt = Date.now() + DEFAULT_POLL_INTERVAL_MS;
+        }
+        console.error(`❌ Failed to sync waiting room (${reason}):`, err);
+      } finally {
+        pollState.isFetching = false;
+        if (pollState.stopped) return;
+
+        if (pollState.pendingReason) {
+          const pendingReason = pollState.pendingReason;
+          pollState.pendingReason = null;
+          schedulePoll(0, { clampToMin: false, reason: pendingReason });
+          return;
+        }
+
+        schedulePoll(nextDelay);
+      }
+    };
+
+    fetchLatestState('initial-load');
 
     const handleSocketStart = (data = {}) => {
       console.log("🎮 Received game:start event:", data);
@@ -132,6 +203,7 @@ export default function WaitingRoom({ gameId, gameData, setGameData, onStart, on
       if (statusFromPayload !== 'active' && data.force !== true) {
         return;
       }
+      stopPolling();
       navigateToGame('socket-start', {
         ...data,
         gameId: data.gameId || resolvedGameId,
@@ -139,14 +211,14 @@ export default function WaitingRoom({ gameId, gameData, setGameData, onStart, on
       });
     };
 
-    const handlePlayerJoin = (data) => {
-      console.log("👤 Player joined:", data);
-      syncFromServer('player-joined');
+    const handlePlayerJoinEvent = (data) => {
+      console.log('👥 Player joined event:', data);
+      fetchLatestState('player-joined');
     };
 
     const handlePlayerLeave = (data) => {
       console.log("🚪 Player left waiting room:", data.playerName);
-      syncFromServer('player-left');
+      fetchLatestState('player-left');
     };
 
     const handleConnect = () => {
@@ -159,46 +231,23 @@ export default function WaitingRoom({ gameId, gameData, setGameData, onStart, on
     if (socket.connected) {
       handleConnect();
     }
-    
-    socket.on("player:joined", handlePlayerJoin);
-    socket.on("game:join", handlePlayerJoin); // Alias
+
+    socket.on("player:joined", handlePlayerJoinEvent);
+    socket.on("game:join", handlePlayerJoinEvent);
     socket.on("game:start", handleSocketStart);
     socket.on("game:state", handleSocketStart);
     socket.on("player:left", handlePlayerLeave);
-    socket.on("game:leave", handlePlayerLeave); // Alias
-
-    // ONLY polling in WaitingRoom - stops once game becomes active
-    let pollingStopped = false;
-    const pollInterval = setInterval(async () => {
-      if (pollingStopped) return;
-      
-      try {
-        const payload = applyGamePayload(await getGameState(resolvedGameId), 'polling');
-        const gameStatus = payload?.status;
-        console.log(`📊 Polling game ${resolvedGameId}, status:`, gameStatus);
-        
-        if (gameStatus === "active") {
-          console.log("✅ Game started - stopping polling and navigating");
-          pollingStopped = true;
-          clearInterval(pollInterval);
-          navigateToGame('polling-active', { state: 'active', gameId: resolvedGameId });
-        }
-      } catch (err) {
-        console.error("❌ Polling error:", err);
-      }
-    }, 10000);
+    socket.on("game:leave", handlePlayerLeave);
 
     return () => {
-      pollingStopped = true;
-      clearInterval(pollInterval);
+      stopPolling();
       socket.off("connect", handleConnect);
-      socket.off("player:joined", handlePlayerJoin);
-      socket.off("game:join", handlePlayerJoin);
+      socket.off("player:joined", handlePlayerJoinEvent);
+      socket.off("game:join", handlePlayerJoinEvent);
       socket.off("game:start", handleSocketStart);
       socket.off("game:state", handleSocketStart);
       socket.off("player:left", handlePlayerLeave);
       socket.off("game:leave", handlePlayerLeave);
-      // Don't disconnect - keep socket alive
     };
   }, [resolvedGameId, onStart, onJoin, navigate, setGameData, navigateToGame]);
 

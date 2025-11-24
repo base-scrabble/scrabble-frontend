@@ -21,7 +21,8 @@ export function connectSocket(url) {
     console.log('🔌 Initializing socket connection...', `URL: ${targetUrl}`);
     
     const opts = {
-      transports: ['websocket', 'polling'],
+      transports: ['websocket'],
+      upgrade: false,
       autoConnect: false,
       reconnection: true,
       reconnectionAttempts: Infinity,
