@@ -5,9 +5,12 @@ import { connectSocket, getSocket } from "../services/socketService";
 import { getSessionItem } from "../utils/session";
 import { extractGamePayload, resolveGameId } from "../utils/gamePayload";
 
-const MIN_POLL_INTERVAL_MS = 3000;
-const DEFAULT_POLL_INTERVAL_MS = 4000;
-const RATE_LIMIT_BACKOFF_MS = 5000;
+const MIN_POLL_INTERVAL_MS = 4000;
+const MAX_POLL_INTERVAL_MS = 5000;
+const DEFAULT_POLL_INTERVAL_MS = 5000;
+const RATE_LIMIT_BACKOFF_MS = 7000;
+const MAX_WAITING_ROOM_RETRIES = 1;
+const SOCKET_SYNC_COOLDOWN_MS = 750;
 
 const normalizePlayers = (players = []) =>
   players.map((p, idx) =>
@@ -30,6 +33,8 @@ export default function WaitingRoom({ gameId, gameData, setGameData, onStart, on
   const [copiedId, setCopiedId] = useState(false);
   const [loading, setLoading] = useState(false);
   const hasEnteredGameRef = useRef(false);
+  const socketSyncGateRef = useRef(0);
+  const onStartRef = useRef(onStart);
   const navigate = useNavigate();
   const storedName = getSessionItem('playerName', '');
   const storedGameId = getSessionItem('currentGameId', '');
@@ -42,6 +47,10 @@ export default function WaitingRoom({ gameId, gameData, setGameData, onStart, on
   const enoughPlayers = players.length >= 2;
   const canStart = isHostClient && enoughPlayers && !loading;
   const waitingOnHost = !isHostClient && enoughPlayers;
+
+  useEffect(() => {
+    onStartRef.current = onStart;
+  }, [onStart]);
 
   useEffect(() => {
     hasEnteredGameRef.current = false;
@@ -63,11 +72,12 @@ export default function WaitingRoom({ gameId, gameData, setGameData, onStart, on
       ...payload,
     };
 
-    if (typeof onStart === 'function') {
-      onStart(startPayload);
+    const handler = onStartRef.current;
+    if (typeof handler === 'function') {
+      handler(startPayload);
     }
     navigate(`/game/${targetGameId}`);
-  }, [resolvedGameId, navigate, onStart]);
+  }, [resolvedGameId, navigate]);
 
   const applyGamePayload = (raw, reason = 'update') => {
     const payload = extractGamePayload(raw);
@@ -108,7 +118,9 @@ export default function WaitingRoom({ gameId, gameData, setGameData, onStart, on
   useEffect(() => {
     if (!resolvedGameId) return;
 
+    let mounted = true;
     const actualPlayerName = getSessionItem('playerName', 'Guest');
+    const normalizedSelfName = (actualPlayerName || '').trim().toLowerCase();
     const socketUrl = import.meta.env.DEV ? undefined : import.meta.env.VITE_SOCKET_URL;
     const socket = connectSocket(socketUrl);
     if (!socket) return;
@@ -119,6 +131,8 @@ export default function WaitingRoom({ gameId, gameData, setGameData, onStart, on
       nextAllowedAt: Date.now(),
       stopped: false,
       pendingReason: null,
+      retryBudget: MAX_WAITING_ROOM_RETRIES,
+      initialFetchSent: false,
     };
 
     const clearPollTimer = () => {
@@ -129,81 +143,130 @@ export default function WaitingRoom({ gameId, gameData, setGameData, onStart, on
     };
 
     const stopPolling = () => {
+      if (pollState.stopped) return;
       pollState.stopped = true;
       pollState.pendingReason = null;
       clearPollTimer();
     };
 
-    const schedulePoll = (delay = DEFAULT_POLL_INTERVAL_MS, { clampToMin = true, reason = 'scheduled' } = {}) => {
-      if (pollState.stopped) return;
+    const schedulePoll = (delay = DEFAULT_POLL_INTERVAL_MS, { clampToWindow = true, reason = 'scheduled' } = {}) => {
+      if (pollState.stopped || !mounted) return;
       const safeDelay = Math.max(delay, 0);
-      const finalDelay = clampToMin ? Math.max(safeDelay, MIN_POLL_INTERVAL_MS) : safeDelay;
+      const boundedDelay = clampToWindow
+        ? Math.min(Math.max(safeDelay, MIN_POLL_INTERVAL_MS), MAX_POLL_INTERVAL_MS)
+        : safeDelay;
       clearPollTimer();
       pollState.timeoutId = setTimeout(() => {
         pollState.timeoutId = null;
         fetchLatestState(reason);
-      }, finalDelay);
+      }, boundedDelay);
     };
 
-    const fetchLatestState = async (reason = 'auto') => {
-      if (pollState.stopped || !resolvedGameId) return;
+    const fetchLatestState = async (reason = 'auto', options = {}) => {
+      const { allowScheduling = true, force = false } = options;
+      if (!mounted) return;
+      if (pollState.stopped && !force) return;
       if (pollState.isFetching) {
         pollState.pendingReason = reason;
         return;
       }
 
+      if (reason === 'initial-load') {
+        if (pollState.initialFetchSent) return;
+        pollState.initialFetchSent = true;
+      }
+
       const now = Date.now();
-      if (now < pollState.nextAllowedAt) {
-        schedulePoll(pollState.nextAllowedAt - now, { clampToMin: false, reason });
+      if (!force && now < pollState.nextAllowedAt) {
+        if (allowScheduling) {
+          schedulePoll(pollState.nextAllowedAt - now, { clampToWindow: false, reason: 'throttled' });
+        }
         return;
       }
 
       pollState.isFetching = true;
-      let nextDelay = DEFAULT_POLL_INTERVAL_MS;
+      let scheduledFromCatch = false;
 
       try {
         const payload = await getGameState(resolvedGameId);
+        pollState.retryBudget = MAX_WAITING_ROOM_RETRIES;
         pollState.nextAllowedAt = Date.now() + DEFAULT_POLL_INTERVAL_MS;
         const normalized = applyGamePayload(payload, reason);
         if (normalized?.status === 'active') {
-          stopPolling();
+          stopPolling('state-active');
           navigateToGame('polling-active', { state: 'active', gameId: resolvedGameId });
           return;
         }
       } catch (err) {
         const statusCode = err?.response?.status || err?.status;
+        const fallbackDelay = statusCode === 429 ? RATE_LIMIT_BACKOFF_MS : DEFAULT_POLL_INTERVAL_MS;
         if (statusCode === 429) {
           pollState.nextAllowedAt = Date.now() + RATE_LIMIT_BACKOFF_MS;
-          nextDelay = RATE_LIMIT_BACKOFF_MS;
           console.warn('⚠️ Rate limit hit while syncing waiting room. Backing off before retrying.', err?.message || '');
         } else {
           pollState.nextAllowedAt = Date.now() + DEFAULT_POLL_INTERVAL_MS;
         }
+
+        const canRetry = pollState.retryBudget > 0;
+        if (allowScheduling && !pollState.stopped) {
+          scheduledFromCatch = true;
+          if (canRetry) {
+            pollState.retryBudget -= 1;
+            schedulePoll(MIN_POLL_INTERVAL_MS, { reason: `${reason}-retry` });
+          } else {
+            pollState.retryBudget = 0;
+            schedulePoll(fallbackDelay, { clampToWindow: false, reason: `${reason}-error` });
+          }
+        }
+
         console.error(`❌ Failed to sync waiting room (${reason}):`, err);
       } finally {
         pollState.isFetching = false;
-        if (pollState.stopped) return;
+
+        if (!allowScheduling || pollState.stopped || !mounted) {
+          pollState.pendingReason = null;
+          return;
+        }
+
+        if (scheduledFromCatch) {
+          return;
+        }
 
         if (pollState.pendingReason) {
           const pendingReason = pollState.pendingReason;
           pollState.pendingReason = null;
-          schedulePoll(0, { clampToMin: false, reason: pendingReason });
+          fetchLatestState(pendingReason);
           return;
         }
 
-        schedulePoll(nextDelay);
+        schedulePoll(DEFAULT_POLL_INTERVAL_MS);
       }
     };
 
     fetchLatestState('initial-load');
 
+    const syncOnceFromSocket = (reason = 'socket-event') => {
+      const now = Date.now();
+      if (now - socketSyncGateRef.current < SOCKET_SYNC_COOLDOWN_MS) {
+        return;
+      }
+      socketSyncGateRef.current = now;
+      stopPolling('socket-event');
+      fetchLatestState(reason, { allowScheduling: false, force: true });
+    };
+
+    const isSelfEvent = (data = {}) => {
+      if (!normalizedSelfName) return false;
+      return (data?.playerName || '').trim().toLowerCase() === normalizedSelfName;
+    };
+
     const handleSocketStart = (data = {}) => {
       console.log("🎮 Received game:start event:", data);
+      stopPolling('socket-start');
       const statusFromPayload = data.state || data.status;
       if (statusFromPayload !== 'active' && data.force !== true) {
         return;
       }
-      stopPolling();
       navigateToGame('socket-start', {
         ...data,
         gameId: data.gameId || resolvedGameId,
@@ -213,17 +276,22 @@ export default function WaitingRoom({ gameId, gameData, setGameData, onStart, on
 
     const handlePlayerJoinEvent = (data) => {
       console.log('👥 Player joined event:', data);
-      fetchLatestState('player-joined');
+      stopPolling('player-event');
+      if (isSelfEvent(data)) {
+        return;
+      }
+      syncOnceFromSocket('player-joined');
     };
 
     const handlePlayerLeave = (data) => {
-      console.log("🚪 Player left waiting room:", data.playerName);
-      fetchLatestState('player-left');
+      console.log("🚪 Player left waiting room:", data?.playerName);
+      syncOnceFromSocket('player-left');
     };
 
     const handleConnect = () => {
       if (!resolvedGameId || !actualPlayerName) return;
       console.log("🔌 Socket connected to game room:", resolvedGameId, "as", actualPlayerName);
+      stopPolling('socket-connected');
       socket.emit("game:join", { gameId: resolvedGameId, playerName: actualPlayerName });
     };
 
@@ -240,7 +308,8 @@ export default function WaitingRoom({ gameId, gameData, setGameData, onStart, on
     socket.on("game:leave", handlePlayerLeave);
 
     return () => {
-      stopPolling();
+      mounted = false;
+      stopPolling('cleanup');
       socket.off("connect", handleConnect);
       socket.off("player:joined", handlePlayerJoinEvent);
       socket.off("game:join", handlePlayerJoinEvent);
@@ -249,7 +318,7 @@ export default function WaitingRoom({ gameId, gameData, setGameData, onStart, on
       socket.off("player:left", handlePlayerLeave);
       socket.off("game:leave", handlePlayerLeave);
     };
-  }, [resolvedGameId, onStart, onJoin, navigate, setGameData, navigateToGame]);
+  }, [resolvedGameId, navigateToGame]);
 
   useEffect(() => {
     if (status === 'active') {
