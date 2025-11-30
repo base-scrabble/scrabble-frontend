@@ -1,6 +1,13 @@
 import { io } from "socket.io-client";
 
 let socket = null;
+let pendingJoinPayload = null;
+let joinTimer = null;
+let lastJoinSignature = null;
+let lastJoinTimestamp = 0;
+
+const JOIN_DEBOUNCE_MS = 200;
+const JOIN_COOLDOWN_MS = 1500;
 
 const readStoredValue = (key) => {
   if (typeof window === "undefined") return null;
@@ -35,6 +42,9 @@ export function connectSocket(url) {
     socket.on("connect", () => {
       console.log("✅ Socket connected:", socket.id);
       console.log("🔗 Socket connected - readyState:", socket.connected);
+      if (pendingJoinPayload) {
+        emitJoin(pendingJoinPayload, "pending-connect");
+      }
     });
     
     socket.on("connect_error", (error) => {
@@ -47,7 +57,7 @@ export function connectSocket(url) {
       const gameId = readStoredValue("currentGameId") || readStoredValue("gameId");
       const playerName = readStoredValue("playerName") || readStoredValue("playerId");
       if (gameId && playerName) {
-        socket.emit("game:join", { gameId, playerName });
+        requestRoomJoin({ gameId, playerName }, "auto-reconnect");
       }
     });
 
@@ -98,6 +108,34 @@ export function getSocket() {
   return socket;
 }
 
+function emitJoin(payload, reason = "manual") {
+  if (!socket || !socket.connected) return;
+  const signature = `${payload.gameId}:${payload.playerName}`;
+  const now = Date.now();
+  if (signature === lastJoinSignature && now - lastJoinTimestamp < JOIN_COOLDOWN_MS) {
+    console.debug("⚠️ Skipping duplicate join emission", { reason, signature });
+    return;
+  }
+  console.log("🚪 Joining game room", { ...payload, reason });
+  socket.emit("game:join", payload);
+  lastJoinSignature = signature;
+  lastJoinTimestamp = now;
+}
+
+export function requestRoomJoin(payload, reason = "manual") {
+  if (!payload?.gameId || !payload?.playerName) return;
+  pendingJoinPayload = payload;
+  if (!socket) return;
+  clearTimeout(joinTimer);
+  joinTimer = setTimeout(() => {
+    if (socket.connected) {
+      emitJoin(payload, reason);
+    } else {
+      console.debug("ℹ️ Delaying room join until socket is connected", reason);
+    }
+  }, JOIN_DEBOUNCE_MS);
+}
+
 export function disconnectSocket() {
   if (socket) {
     socket.off("connect");
@@ -108,6 +146,13 @@ export function disconnectSocket() {
     socket.off("game:start");
     socket.off("game:leave");
     socket.disconnect();
+    pendingJoinPayload = null;
+    lastJoinSignature = null;
+    lastJoinTimestamp = 0;
+    if (joinTimer) {
+      clearTimeout(joinTimer);
+      joinTimer = null;
+    }
     socket = null;
   }
 }

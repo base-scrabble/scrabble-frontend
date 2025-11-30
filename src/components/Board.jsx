@@ -2,6 +2,7 @@ import { useMemo } from "react";
 
 const BOARD_SIZE = 15;
 const DEFAULT_BOARD = Array.from({ length: BOARD_SIZE }, () => Array(BOARD_SIZE).fill(null));
+const CENTER_INDEX = Math.floor(BOARD_SIZE / 2);
 const PREMIUM_SQUARES = {
   "0,0": "TW", "0,7": "TW", "0,14": "TW",
   "7,0": "TW", "7,14": "TW",
@@ -75,16 +76,18 @@ export default function Board({ board, onTilePlace, pendingPlacements = [] }) {
 
             const premiumClass = style?.className ? ` ${style.className}` : "";
             const pendingClass = pendingLetter ? " scrabble-board__cell--pending" : "";
+            const originClass = rIdx === CENTER_INDEX && cIdx === CENTER_INDEX ? " scrabble-board__cell--origin" : "";
 
             return (
               <div
                 key={key}
                 onClick={() => onTilePlace?.(rIdx, cIdx)}
-                className={`${baseClass}${premiumClass}${pendingClass}`}
+                className={`${baseClass}${premiumClass}${pendingClass}${originClass}`}
                 data-premium={premium || undefined}
                 data-filled={!!displayLetter || undefined}
                 data-pending={pendingLetter || undefined}
                 data-blank={isBlankTile || undefined}
+                data-origin={originClass ? true : undefined}
               >
                 <span className="scrabble-board__cell-label">
                   {displayLetter || style?.label || ""}

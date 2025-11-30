@@ -8,12 +8,14 @@ const isDev = import.meta.env.DEV;
 
 // In development use a relative path so Vite dev server proxy forwards to backend
 // In production use the explicit backend URL from env (or fallback)
+const RAILWAY_BACKEND = 'https://scrabble-backend-production.up.railway.app';
+
 export const API_BASE_URL = isDev
   ? '/api'
-  : (import.meta.env.VITE_BACKEND_URL || "http://localhost:3000").replace(/\/$/, "") + "/api";
+  : (import.meta.env.VITE_BACKEND_URL || RAILWAY_BACKEND).replace(/\/$/, "") + "/api";
 
-// WebSocket (optional, can be wired later)
-export const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || "";
+// WebSocket endpoint (defaults to Railway backend socket namespace)
+export const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || RAILWAY_BACKEND;
 
 // Privy Configuration
 export const PRIVY_APP_ID = import.meta.env.VITE_PRIVY_APP_ID;

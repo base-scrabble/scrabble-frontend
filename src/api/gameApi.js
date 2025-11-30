@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { API_BASE_URL } from '../config';
+import { withApiRetry } from '../utils/retry';
 
 // Use axios with credentials for game API calls
 const client = axios.create({
@@ -9,46 +10,66 @@ const client = axios.create({
 
 const unwrap = (res) => res?.data?.data ?? res?.data ?? res;
 
+const callGameplayApi = (requestFactory, meta) =>
+  withApiRetry(async () => {
+    const response = await requestFactory();
+    return unwrap(response);
+  }, meta);
+
 export async function createGame(playerName, stakeAmount = null, stakeTxHash = null, playerAddress = null) {
-  const res = await client.post('/gameplay/create', { 
-    playerName,
-    stakeAmount,
-    stakeTxHash,
-    playerAddress
-  });
-  return unwrap(res);
+  return callGameplayApi(
+    () => client.post('/gameplay/create', {
+      playerName,
+      stakeAmount,
+      stakeTxHash,
+      playerAddress,
+    }),
+    { id: 'gameplay:create' }
+  );
 }
 
 export async function joinGame(gameId, playerName) {
-  const res = await client.post(`/gameplay/${encodeURIComponent(gameId)}/join`, { playerName });
-  return unwrap(res);
+  return callGameplayApi(
+    () => client.post(`/gameplay/${encodeURIComponent(gameId)}/join`, { playerName }),
+    { id: 'gameplay:join', attempts: 4 }
+  );
 }
 
 export async function getGameState(gameId, playerName) {
   const params = {};
   if (playerName) params.playerName = playerName;
-  const res = await client.get(`/gameplay/${encodeURIComponent(gameId)}`, { params });
-  return unwrap(res);
+  return callGameplayApi(
+    () => client.get(`/gameplay/${encodeURIComponent(gameId)}`, { params }),
+    { id: 'gameplay:getState', attempts: 4 }
+  );
 }
 
 export async function makeMove(gameId, playerName, move) {
-  const res = await client.post(`/gameplay/${encodeURIComponent(gameId)}/move`, { playerName, ...move });
-  return unwrap(res);
+  return callGameplayApi(
+    () => client.post(`/gameplay/${encodeURIComponent(gameId)}/move`, { playerName, ...move }),
+    { id: 'gameplay:move', attempts: 2 }
+  );
 }
 
 export async function skipTurn(gameId, playerName) {
-  const res = await client.post(`/gameplay/${encodeURIComponent(gameId)}/skip`, { playerName });
-  return unwrap(res);
+  return callGameplayApi(
+    () => client.post(`/gameplay/${encodeURIComponent(gameId)}/skip`, { playerName }),
+    { id: 'gameplay:skip' }
+  );
 }
 
 export async function startGame(gameId) {
-  const res = await client.post(`/gameplay/${encodeURIComponent(gameId)}/start`);
-  return unwrap(res);
+  return callGameplayApi(
+    () => client.post(`/gameplay/${encodeURIComponent(gameId)}/start`),
+    { id: 'gameplay:start', attempts: 2 }
+  );
 }
 
 export async function endGame(gameId) {
-  const res = await client.post(`/gameplay/${encodeURIComponent(gameId)}/end`);
-  return unwrap(res);
+  return callGameplayApi(
+    () => client.post(`/gameplay/${encodeURIComponent(gameId)}/end`),
+    { id: 'gameplay:end', attempts: 2 }
+  );
 }
 
 export default {

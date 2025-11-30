@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { connectSocket, getSocket } from "../services/socketService";
+import { connectSocket, getSocket, requestRoomJoin } from "../services/socketService";
 import { getGameState, makeMove as recordMove } from "../api/gameApi";
 import Board from "./Board";
 import Rack from "./Rack";
@@ -20,7 +20,14 @@ export default function PlayGame({ gameId, gameData, setGameData, playerName, on
   const [exchangeMode, setExchangeMode] = useState(false);
   const [exchangeSelection, setExchangeSelection] = useState([]);
   const [pendingBlankSelection, setPendingBlankSelection] = useState(null);
+  const [connectionStatus, setConnectionStatus] = useState('connecting');
+  const [connectionMessage, setConnectionMessage] = useState('');
+  const [resyncing, setResyncing] = useState(false);
+  const [lastSyncedAt, setLastSyncedAt] = useState(null);
   const exitHandledRef = useRef(false);
+  const lastDisconnectReasonRef = useRef(null);
+
+  const markSynced = () => setLastSyncedAt(Date.now());
 
   const normalizePlayers = (arr, currentTurnValue) =>
     (arr || []).map((p) => ({
@@ -66,19 +73,22 @@ export default function PlayGame({ gameId, gameData, setGameData, playerName, on
     setExchangeMode(false);
     setExchangeSelection([]);
     setPendingBlankSelection(null);
+    markSynced();
   };
 
   const fetchLatestState = async (reason = 'socket-fallback') => {
-    if (!gameId) return;
+    if (!gameId) return false;
     try {
       const response = await getGameState(gameId, playerName || getSessionItem('playerName'));
       const payload = extractGamePayload(response);
       if (payload) {
         applyGamePayload(payload);
+        return true;
       }
     } catch (err) {
       console.error(`❌ Failed to refresh game state (${reason}):`, err);
     }
+    return false;
   };
 
   useEffect(() => {
@@ -107,6 +117,7 @@ export default function PlayGame({ gameId, gameData, setGameData, playerName, on
     const socketUrl = import.meta.env.DEV ? undefined : import.meta.env.VITE_SOCKET_URL;
     const socket = connectSocket(socketUrl);
     if (!socket) return;
+    const manager = socket.io;
 
     const handleUpdate = (data) => {
       console.log('🎮 Game state update received:', data);
@@ -160,10 +171,46 @@ export default function PlayGame({ gameId, gameData, setGameData, playerName, on
     const handleConnect = () => {
       if (!gameId || !actualPlayerName) return;
       console.log('🔌 Socket connected to game room:', gameId, 'as', actualPlayerName);
-      socket.emit("game:join", { gameId, playerName: actualPlayerName });
+      requestRoomJoin({ gameId, playerName: actualPlayerName }, 'socket-connect');
+      setConnectionStatus('connected');
+      setConnectionMessage('');
+      if (lastDisconnectReasonRef.current) {
+        fetchLatestState('post-reconnect');
+        lastDisconnectReasonRef.current = null;
+      }
+    };
+
+    const handleDisconnect = (reason) => {
+      lastDisconnectReasonRef.current = reason;
+      setConnectionStatus('reconnecting');
+      setConnectionMessage(
+        reason === 'io server disconnect'
+          ? 'Server requested a reconnect…'
+          : 'Connection lost. Attempting to reconnect…'
+      );
+    };
+
+    const handleConnectError = (err) => {
+      setConnectionStatus('reconnecting');
+      setConnectionMessage(err?.message || 'Connection error, retrying…');
+    };
+
+    const handleReconnectAttempt = (attempt) => {
+      setConnectionStatus('reconnecting');
+      setConnectionMessage(`Reconnecting (attempt ${attempt})…`);
+    };
+
+    const handleReconnectFailed = () => {
+      setConnectionStatus('offline');
+      setConnectionMessage('Unable to reach the game server.');
     };
 
     socket.on("connect", handleConnect);
+    socket.on("disconnect", handleDisconnect);
+    socket.on("connect_error", handleConnectError);
+    manager?.on("reconnect_attempt", handleReconnectAttempt);
+    manager?.on("reconnect_failed", handleReconnectFailed);
+    manager?.on("reconnect", handleConnect);
     if (socket.connected) {
       handleConnect();
     }
@@ -180,6 +227,11 @@ export default function PlayGame({ gameId, gameData, setGameData, playerName, on
 
     return () => {
       socket.off("connect", handleConnect);
+      socket.off("disconnect", handleDisconnect);
+      socket.off("connect_error", handleConnectError);
+      manager?.off("reconnect_attempt", handleReconnectAttempt);
+      manager?.off("reconnect_failed", handleReconnectFailed);
+      manager?.off("reconnect", handleConnect);
       socket.off("game:update", handleUpdate);
       socket.off("game:state", handleUpdate);
       socket.off("game:move", handleSocketMove);
@@ -471,6 +523,36 @@ export default function PlayGame({ gameId, gameData, setGameData, playerName, on
             >
               dismiss
             </button>
+          </div>
+        )}
+        {(connectionStatus === 'reconnecting' || connectionStatus === 'offline') && (
+          <div className={`connection-banner connection-banner--${connectionStatus}`}>
+            <div className="connection-banner__info">
+              <p className="connection-banner__title">
+                {connectionStatus === 'offline' ? 'Offline' : 'Reconnecting…'}
+              </p>
+              <p className="connection-banner__message">
+                {connectionMessage || 'Trying to restore the socket connection.'}
+              </p>
+              <p className="connection-banner__meta">
+                Last synced: {lastSyncedAt ? new Date(lastSyncedAt).toLocaleTimeString() : 'pending'}
+              </p>
+            </div>
+            <div className="connection-banner__actions">
+              <button
+                type="button"
+                className="btn-chip"
+                onClick={async () => {
+                  if (resyncing) return;
+                  setResyncing(true);
+                  await fetchLatestState('manual-resync');
+                  setResyncing(false);
+                }}
+                disabled={resyncing}
+              >
+                {resyncing ? 'Syncing…' : 'Refresh state'}
+              </button>
+            </div>
           </div>
         )}
         <div className="mobile-top-bar mobile-only">
