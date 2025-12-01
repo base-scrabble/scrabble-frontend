@@ -7,9 +7,10 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview --host=127.0.0.1 --port=4173"
   },
   "dependencies": {
+    "@coinbase/onchainkit": "^1.1.2",
     "axios": "^1.11.0",
     "ethers": "^6.15.0",
     "react": "^19.1.0",
@@ -20,6 +21,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
+    "@playwright/test": "^1.57.0",
     "@vitejs/plugin-react": "^4.6.0",
     "autoprefixer": "^10.4.21",
     "eslint": "^9.39.1",
