@@ -33,6 +33,8 @@ import {
   getSessionJSON,
   setSessionJSON,
 } from "./utils/session";
+import Waitlist from "./pages/Waitlist";
+import Success from "./pages/Success";
 
 export default function AppRoutes() {
   return (
@@ -59,7 +61,7 @@ function AppRoutesInner() {
   // Accepts either:
   //  - a backend response object: { gameId, players, state, playerName? }
   //  - OR (fallback) a plain playerName string (older versions)
-  const handleCreate = (data) => {
+  const handleCreate = (data = {}) => {
     if (!data) return;
 
     // fallback: CreateGame passed playerName string only
@@ -271,6 +273,10 @@ function AppRoutesInner() {
             />
           }
         />
+
+        {/* Waitlist and Success pages */}
+        <Route path="/waitlist" element={<Waitlist />} />
+        <Route path="/waitlist/success" element={<Success />} />
 
         {/* Fallback -> home */}
         <Route
