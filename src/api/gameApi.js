@@ -1,3 +1,4 @@
+
 import axios from 'axios';
 import { API_BASE_URL } from '../config';
 import { withApiRetry } from '../utils/retry';
@@ -16,15 +17,27 @@ const callGameplayApi = (requestFactory, meta) =>
     return unwrap(response);
   }, meta);
 
-export async function createGame(playerName, stakeAmount = null, stakeTxHash = null, playerAddress = null) {
+// Free Game API
+export async function createFreeGame(playerName, playerAddress = null) {
   return callGameplayApi(
     () => client.post('/gameplay/create', {
       playerName,
-      stakeAmount,
-      stakeTxHash,
       playerAddress,
     }),
     { id: 'gameplay:create' }
+  );
+}
+
+// Staked Game API (future use)
+export async function createStakedGame(playerName, playerAddress, stakeAmount, stakeTxHash) {
+  return callGameplayApi(
+    () => client.post('/gameplay/create-staked', {
+      playerName,
+      playerAddress,
+      stakeAmount,
+      stakeTxHash,
+    }),
+    { id: 'gameplay:create-staked' }
   );
 }
 
@@ -72,8 +85,8 @@ export async function endGame(gameId) {
   );
 }
 
-export default {
-  createGame,
+  createFreeGame,
+  createStakedGame,
   joinGame,
   startGame,
   getGameState,

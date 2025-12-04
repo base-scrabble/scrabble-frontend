@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { createGame } from "../api/gameApi";
+import { createFreeGame } from "../api/gameApi";
 import { getSessionItem, setSessionItem } from "../utils/session";
 import { extractGamePayload, resolveGameId } from "../utils/gamePayload";
 import { useWallet } from "../context/WalletContext";
@@ -42,7 +42,7 @@ export default function CreateGame({ onCreate }) {
     try {
       // For now, skip blockchain staking - just create the game
       // TODO: Implement blockchain staking with proper contract integration
-      const data = await createGame(normalizedName, null, null, account);
+      const data = await createFreeGame(normalizedName, account);
       const payload = extractGamePayload(data);
       const resolvedGameId = resolveGameId(payload);
 
