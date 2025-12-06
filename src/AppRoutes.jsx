@@ -213,6 +213,9 @@ function AppRoutesInner() {
                   Share the same name across both cards so you stay synced between create and join.
                 </p>
               </section>
+              <div className="mb-4">
+                <Link to="/waitlist" className="btn bg-blue-600 text-white px-4 py-2 rounded">Join the Waitlist</Link>
+              </div>
               <div className="grid gap-6 lg:grid-cols-2">
                 <CreateGame
                   onCreate={handleCreate}

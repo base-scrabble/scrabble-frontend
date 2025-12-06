@@ -12,7 +12,7 @@ export default defineConfig({
     // Proxy API calls in development to avoid CORS issues
     proxy: {
       '/api': {
-        target: 'http://localhost:3000',
+        target: 'http://localhost:8000',
         changeOrigin: true,
         secure: false,
         ws: true,
@@ -20,7 +20,7 @@ export default defineConfig({
       },
       // Proxy socket.io to backend so polling and websocket upgrades are forwarded
       '/socket.io': {
-        target: 'http://localhost:3000',
+        target: 'http://localhost:8000',
         changeOrigin: true,
         secure: false,
         ws: true,

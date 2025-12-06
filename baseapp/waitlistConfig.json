@@ -1,0 +1,15 @@
+{
+  "miniApp": "Waitlist",
+  "screens": [
+    {
+      "name": "Join",
+      "fields": ["email"],
+      "action": "POST /api/waitlist/join"
+    },
+    {
+      "name": "Dashboard",
+      "fields": ["code", "referralLink", "referralCount"],
+      "action": "GET /api/waitlist/:code"
+    }
+  ]
+}

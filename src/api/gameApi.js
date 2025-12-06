@@ -85,6 +85,7 @@ export async function endGame(gameId) {
   );
 }
 
+export default {
   createFreeGame,
   createStakedGame,
   joinGame,
