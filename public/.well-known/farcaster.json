@@ -1,0 +1,17 @@
+{
+  "name": "Base Scrabble",
+  "description": "Play, compete, and earn rewards on Base — join the waitlist.",
+  "icon": "/logo.png",
+  "home": "https://basescrabble.xyz",
+  "frames": [
+    {
+      "path": "/waitlist",
+      "title": "Join the Base Scrabble Waitlist",
+      "image": "/frame-waitlist.png",
+      "buttons": [
+        { "label": "Join Waitlist", "action": "post", "target": "/api/waitlist/join" },
+        { "label": "Visit Website", "action": "link", "target": "https://basescrabble.xyz" }
+      ]
+    }
+  ]
+}

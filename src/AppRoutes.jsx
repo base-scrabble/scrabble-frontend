@@ -34,8 +34,10 @@ import {
   getSessionJSON,
   setSessionJSON,
 } from "./utils/session";
+
 import Waitlist from "./pages/Waitlist";
 import Success from "./pages/Success";
+import RedirectJson from "./components/RedirectJson";
 
 export default function AppRoutes() {
   return (
@@ -278,9 +280,13 @@ function AppRoutesInner() {
           }
         />
 
+
         {/* Waitlist and Success pages */}
         <Route path="/waitlist" element={<Waitlist />} />
         <Route path="/waitlist/success" element={<Success />} />
+
+        {/* Farcaster manifest route */}
+        <Route path="/.well-known/farcaster.json" element={<RedirectJson file="/farcaster-frame.json" />} />
 
         {/* Fallback -> home */}
         <Route
