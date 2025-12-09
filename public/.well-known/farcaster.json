@@ -2,9 +2,9 @@
   "version": "1",
   "name": "Base Scrabble",
   "description": "Play, compete, and earn rewards on Base — join the waitlist.",
-  "icon": "https://basescrabble.xyz/logo.png",
+  "icon": "https://basescrabble.xyz/icon.png",
   "home_url": "https://basescrabble.xyz",
-  "accountAssociation": {
+  "account_association": {
     "header": "eyJmaWQiOjUyMjg2NywidHlwZSI6ImN1c3RvZHkiLCJrZXkiOiIweDVkM2JhYTVCRDg0NGMzM0M0ODA3M0I4RTcxREJDQThDQTNFMDM0RUUifQ",
     "payload": "eyJkb21haW4iOiJiYXNlc2NyYWJibGUueHl6In0",
     "signature": "knK+pJJTyRACFmCZ8DNlQ/tbXANr8Xxf2Ul+5Pqani4C4mderL+vWLdLupUjeodtBcZcdZPF98NJpGKcdeqV1xs="
