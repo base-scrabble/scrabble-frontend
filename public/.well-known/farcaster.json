@@ -1,16 +1,30 @@
 {
+  "version": "1",
   "name": "Base Scrabble",
   "description": "Play, compete, and earn rewards on Base — join the waitlist.",
-  "icon": "/logo.png",
-  "home": "https://basescrabble.xyz",
+  "icon": "https://basescrabble.xyz/logo.png",
+  "home_url": "https://basescrabble.xyz",
+  "account_association": {
+    "header": "eyJmaWQiOjE0ODgxNTQsInR5cGUiOiJjdXN0b2R5Iiwia2V5IjoiMHg1RTRCRjQ2RjFkMGZFYjcyMzVmMWIzMWNlNzJlQmNDREU0QTg5ZDEzIn0",
+    "payload": "eyJkb21haW4iOiJiYXNlc2NyYWJibGUueHl6In0",
+    "signature": "UVlChs9Nyvez8qH1sg0s0yXZ63Ug4S25TxcQ+w2mHkYU0I4hh3H4E6V0dWvXvXVOHPtHvM7gaSBcVrtadQRmCxs="
+  },
   "frames": [
     {
       "path": "/waitlist",
-      "title": "Join the Base Scrabble Waitlist",
-      "image": "/frame-waitlist.png",
+      "name": "Join the Base Scrabble Waitlist",
+      "image": "https://basescrabble.xyz/frame-waitlist.png",
       "buttons": [
-        { "label": "Join Waitlist", "action": "post", "target": "/api/waitlist/join" },
-        { "label": "Visit Website", "action": "link", "target": "https://basescrabble.xyz" }
+        {
+          "label": "Join Waitlist",
+          "action": "post",
+          "target": "https://basescrabble.xyz/api/waitlist/join"
+        },
+        {
+          "label": "Visit Website",
+          "action": "link",
+          "target": "https://basescrabble.xyz"
+        }
       ]
     }
   ]
