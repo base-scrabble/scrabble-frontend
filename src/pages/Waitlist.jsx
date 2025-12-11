@@ -3,8 +3,7 @@ import { useState, useEffect } from "react";
 import QRCode from "qrcode";
 import Task from "../components/Task";
 
-const API = import.meta.env.VITE_API_URL || "";
-const API_BASE = `${API}/api/waitlist`;
+const API_BASE = `${import.meta.env.VITE_API_BASE_URL}`;
 
 const TASKS = [
   { id: "x_follow", label: "Follow Base Scrabble on X", link: "https://x.com/basescrabble", xp: 20 },
@@ -74,7 +73,7 @@ export default function Waitlist() {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch(`${API}/api/waitlist/join`, {
+      const res = await fetch(`${API_BASE}/join`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
