@@ -73,7 +73,7 @@ export default function Waitlist() {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch(`${API_BASE}/join`, {
+      const res = await fetch(`${API_BASE}/waitlist/join`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
