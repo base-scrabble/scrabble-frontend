@@ -7,6 +7,7 @@ export default function renderRules() {
       <meta name="viewport" content="width=device-width, initial-scale=1" />
       <meta property="og:title" content="Base Scrabble — Rules" />
       <meta property="og:image" content="https://www.basescrabble.xyz/icon.png" />
+      <meta name="fc:frame:image" content="https://www.basescrabble.xyz/icon.png" />
       <meta name="fc:frame:version" content="2024-02-01" />
       <meta name="fc:frame:button:1" content="Back to Home" />
       <meta name="fc:frame:button:1:action" content="post" />
@@ -24,6 +25,9 @@ export default function renderRules() {
           <li>Competitive matches and tournaments run on schedules.</li>
         </ul>
         <p style="color:#93c5fd;font-size:13px;">This is a preview. Full on-chain game coming soon.</p>
+        <p style="margin:16px 0 0 0;font-size:13px;color:#93c5fd;">
+          <a href="https://www.basescrabble.xyz/frames/welcome" style="color:#93c5fd;text-decoration:underline;">Back to Home</a>
+        </p>
       </div>
     </body>
   </html>`;

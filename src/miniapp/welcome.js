@@ -7,6 +7,7 @@ export default function renderWelcome() {
       <meta name="viewport" content="width=device-width, initial-scale=1" />
       <meta property="og:title" content="Base Scrabble — Mini App" />
       <meta property="og:image" content="https://www.basescrabble.xyz/icon.png" />
+      <meta name="fc:frame:image" content="https://www.basescrabble.xyz/icon.png" />
       <meta name="fc:frame:version" content="2024-02-01" />
       <meta name="fc:frame:button:1" content="Join Waitlist" />
       <meta name="fc:frame:button:1:action" content="link" />
@@ -24,9 +25,18 @@ export default function renderWelcome() {
         <h1 style="margin:0 0 12px 0;font-size:24px;font-weight:800;">Base Scrabble — Mini App</h1>
         <p style="margin:0 0 16px 0;font-size:14px;color:#93c5fd;">Welcome! Choose an option below to continue.</p>
         <ol style="text-align:left;color:#e5e7eb;font-size:14px;">
-          <li>Join Waitlist → opens website</li>
-          <li>Play Demo → interactive mini board</li>
-          <li>Rules → quick summary</li>
+          <li>
+            <a href="https://www.basescrabble.xyz/waitlist" style="color:#93c5fd;text-decoration:underline;">Join Waitlist</a>
+            <span style="color:#9ca3af;"> → opens website</span>
+          </li>
+          <li>
+            <a href="https://www.basescrabble.xyz/frames/demo" style="color:#93c5fd;text-decoration:underline;">Play Demo</a>
+            <span style="color:#9ca3af;"> → interactive mini board</span>
+          </li>
+          <li>
+            <a href="https://www.basescrabble.xyz/frames/rules" style="color:#93c5fd;text-decoration:underline;">Rules</a>
+            <span style="color:#9ca3af;"> → quick summary</span>
+          </li>
         </ol>
       </div>
     </body>

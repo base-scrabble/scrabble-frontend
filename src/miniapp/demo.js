@@ -31,6 +31,7 @@ export default function renderDemo(req) {
       <meta name="viewport" content="width=device-width, initial-scale=1" />
       <meta property="og:title" content="Base Scrabble — Demo" />
       <meta property="og:image" content="https://www.basescrabble.xyz/icon.png" />
+      <meta name="fc:frame:image" content="https://www.basescrabble.xyz/icon.png" />
       <meta name="fc:frame:version" content="2024-02-01" />
       ${messageFrame}
       <meta name="fc:frame:button:1" content="Shuffle Tiles" />
@@ -50,6 +51,9 @@ export default function renderDemo(req) {
         <p style="margin:0 0 16px 0;font-size:14px;color:#93c5fd;">Try a mini board. Shuffle tiles or play a mock move.</p>
         <div style="margin:16px auto;">${board}</div>
         <p style="margin:16px 0 0 0;font-size:13px;color:#e5e7eb;">Nice move! Full game coming soon.</p>
+        <p style="margin:16px 0 0 0;font-size:13px;color:#93c5fd;">
+          <a href="https://www.basescrabble.xyz/frames/welcome" style="color:#93c5fd;text-decoration:underline;">Back to Home</a>
+        </p>
       </div>
     </body>
   </html>`;
