@@ -44,6 +44,16 @@ export default function Waitlist() {
   const [baQR, setBaQR] = useState("");
   const [xpAnim, setXpAnim] = useState(null);
 
+  // Read ?ref=<code> from URL to support referral attribution
+  const [refFromUrl, setRefFromUrl] = useState("");
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const ref = (params.get("ref") || "").trim();
+      if (ref) setRefFromUrl(ref);
+    } catch {}
+  }, []);
+
   useEffect(() => {
     QRCode.toDataURL("https://warpcast.com/basescrabble").then(setFcQR);
     QRCode.toDataURL("baseapp://app/basescrabble").then(setBaQR);
@@ -76,14 +86,15 @@ export default function Waitlist() {
       const res = await fetch(`${API_BASE}/waitlist/join`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, referralCode: refFromUrl || undefined }),
       });
       const data = await res.json();
       if (data.success) {
         setJoined(data);
         setLocal("bs_waitlist_joined", data);
         setCode(data.code);
-        setReferralLink(data.referralLink);
+        // Always generate a frontend invite link for sharing
+        setReferralLink(`https://www.basescrabble.xyz/waitlist?ref=${data.code}`);
         setReferralCount(data.referralCount);
         setSuccess(true);
       } else {
@@ -179,7 +190,7 @@ export default function Waitlist() {
       {joined && (
         <div className="mb-2">
           <div className="mb-2">Your referral code: <span className="font-mono bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded text-blue-700 dark:text-blue-300">{joined.code}</span></div>
-          <div className="mb-2 break-all">Your invite link: <span className="font-mono bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded text-gray-900 dark:text-gray-100">{joined.referralLink}</span></div>
+              <div className="mb-2 break-all">Your invite link: <span className="font-mono bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded text-gray-900 dark:text-gray-100">{referralLink}</span></div>
           <div className="flex gap-2 mt-2">
             <button onClick={handleCopy} className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-2 rounded-lg font-bold">Copy Link</button>
             <button onClick={handleShare} className="bg-gradient-to-r from-green-500 to-blue-500 text-white px-4 py-2 rounded-lg font-bold">Share</button>
