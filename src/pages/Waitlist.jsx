@@ -7,9 +7,9 @@ const API_BASE = `${import.meta.env.VITE_API_BASE_URL}`;
 
 const TASKS = [
   { id: "x_follow", label: "Follow Base Scrabble on X", link: "https://x.com/basescrabble", xp: 20 },
-  { id: "x_repost", label: "Repost our pinned post", link: "https://x.com/basescrabble/status/...", xp: 30 },
+  { id: "x_repost", label: "Repost our pinned post", link: "https://x.com/i/status/1999524491408310710", xp: 30 },
   { id: "fc_follow", label: "Follow on Farcaster", link: "https://warpcast.com/basescrabble", xp: 20 },
-  { id: "fc_recast", label: "Recast pinned cast", link: "https://warpcast.com/basescrabble/...", xp: 30 },
+  { id: "fc_recast", label: "Recast pinned cast", link: "https://farcaster.xyz/basescrabble/0x7bfff9db", xp: 30 },
   // Correct BaseApp profile link (replaces deep link)
   { id: "ba_follow", label: "Follow on BaseApp", link: "https://base.app/profile/0x46051dC1a7bEC3Da891fdd837399c503C6a90414", xp: 20 }
 ];
@@ -185,7 +185,7 @@ export default function Waitlist() {
 
   const handleShare = () => {
     const link = referralLink || `https://www.basescrabble.xyz/waitlist${refFromUrl ? `?ref=${refFromUrl}` : ""}`;
-    const shareText = `Join the Base Scrabble waitlist now and stack XP:\n${link}`;
+    const shareText = `I’m early on Base Scrabble 🧩\nJoin the waitlist and earn XP with my referral — don’t miss your early advantage.\n\n👉 ${link}`;
     if (navigator.share) {
       navigator.share({
         title: 'Base Scrabble Waitlist',
