@@ -80,15 +80,10 @@ export default function Waitlist() {
 
   useEffect(() => {
     if (joined && joined.code) {
-      fetch(`${API_BASE}/${joined.code}`)
-        .then((r) => r.json())
-        .then((data) => {
-          if (data.success) {
-            setReferralLink(data.referralLink);
-            setReferralCount(data.referralCount);
-            setSuccess(true);
-          }
-        });
+      // Use locally generated frontend invite link and counts from join response only
+      setReferralLink(`https://www.basescrabble.xyz/waitlist?ref=${joined.code}`);
+      if (typeof joined.referralCount === 'number') setReferralCount(joined.referralCount);
+      setSuccess(true);
     }
   }, [joined]);
 
@@ -102,10 +97,17 @@ export default function Waitlist() {
     setLoading(true);
     setError("");
     try {
+      const ref = refFromUrl || undefined;
       const res = await fetch(`${API_BASE}/waitlist/join`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, referralCode: refFromUrl || undefined }),
+        // Send multiple aliases to maximize backend compatibility without changing backend logic
+        body: JSON.stringify({
+          email,
+          referralCode: ref,
+          refCode: ref,
+          inviteCode: ref,
+        }),
       });
       const data = await res.json();
       if (data.success) {
