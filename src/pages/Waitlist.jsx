@@ -61,6 +61,15 @@ export default function Waitlist() {
         const normalized = `${url.origin}/waitlist?ref=${fromPath}`;
         window.history.replaceState({}, "", normalized);
       }
+      // IMPORTANT: If visiting via a referral link, always show the form for the recipient
+      // and do not auto-load any prior joined state.
+      if (ref) {
+        try {
+          localStorage.removeItem("bs_waitlist_joined");
+        } catch {}
+        setJoined(null);
+        setSuccess(false);
+      }
     } catch {}
   }, []);
 
