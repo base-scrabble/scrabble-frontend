@@ -4,17 +4,6 @@
   "icon": "https://www.basescrabble.xyz/icon.png",
   "home": "https://www.basescrabble.xyz/frames/welcome",
   "frames": [
-    {
-      "path": "/frames/welcome"
-    }
-  ],
-  "accountAssociation": null
-{
-  "version": "2.0",
-  "name": "Base Scrabble Mini App",
-  "icon": "https://www.basescrabble.xyz/icon.png",
-  "home": "https://www.basescrabble.xyz/frames/welcome",
-  "frames": [
     { "path": "/frames/welcome" }
   ],
   "accountAssociation": null
