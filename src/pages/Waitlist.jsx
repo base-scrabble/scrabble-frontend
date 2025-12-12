@@ -10,7 +10,8 @@ const TASKS = [
   { id: "x_repost", label: "Repost our pinned post", link: "https://x.com/basescrabble/status/...", xp: 30 },
   { id: "fc_follow", label: "Follow on Farcaster", link: "https://warpcast.com/basescrabble", xp: 20 },
   { id: "fc_recast", label: "Recast pinned cast", link: "https://warpcast.com/basescrabble/...", xp: 30 },
-  { id: "ba_follow", label: "Follow on BaseApp", link: "baseapp://app/basescrabble", xp: 20 }
+  // Correct BaseApp profile link (replaces deep link)
+  { id: "ba_follow", label: "Follow on BaseApp", link: "https://base.app/profile/0x46051dC1a7bEC3Da891fdd837399c503C6a90414", xp: 20 }
 ];
 
 function getLocal(key, fallback) {
