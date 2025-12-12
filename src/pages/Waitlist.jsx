@@ -141,8 +141,19 @@ export default function Waitlist() {
           inviteCode: ref,
         }),
       });
-      const data = await res.json();
-      if (data.success) {
+      let data = null;
+      try {
+        data = await res.json();
+      } catch {
+        data = null;
+      }
+      if (!res.ok) {
+        const msg = data?.message || (res.status === 429 ? "Too many requests. Please try again shortly." : `Request failed (${res.status}).`);
+        setError(msg);
+        setLoading(false);
+        return;
+      }
+      if (data?.success) {
         setJoined(data);
         setLocal("bs_waitlist_joined", data);
         setCode(data.code);
@@ -158,7 +169,7 @@ export default function Waitlist() {
           setRefFromUrl(data.code);
         } catch {}
       } else {
-        setError(data.message || "Unknown error");
+        setError(data?.message || "Unknown error");
       }
     } catch (err) {
       setError("Server error");
