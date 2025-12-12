@@ -104,6 +104,8 @@ export default function Waitlist() {
         // Send multiple aliases to maximize backend compatibility without changing backend logic
         body: JSON.stringify({
           email,
+          // Backend expects `ref` for referrer code; include aliases too
+          ref: ref,
           referralCode: ref,
           refCode: ref,
           inviteCode: ref,
