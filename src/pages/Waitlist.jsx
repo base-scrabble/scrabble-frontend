@@ -132,16 +132,16 @@ export default function Waitlist() {
 
   const handleShare = () => {
     const link = referralLink || `https://www.basescrabble.xyz/waitlist${refFromUrl ? `?ref=${refFromUrl}` : ""}`;
-    const shareText = `Join the waitlist and earn XP: ${link}`;
+    const shareText = `Join the Base Scrabble waitlist now and stack XP:\n${link}`;
     if (navigator.share) {
       navigator.share({
-        title: 'Join me on Based Scrabble!',
+        title: 'Base Scrabble Waitlist',
         text: shareText,
         url: link,
       });
     } else {
-      navigator.clipboard.writeText(link);
-      alert('Link copied! Share is not supported on this device.');
+      navigator.clipboard.writeText(shareText);
+      alert('Invite text copied! Share is not supported on this device.');
     }
   };
 
