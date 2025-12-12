@@ -22,9 +22,7 @@ function randomTiles() {
 export default function renderDemo(req) {
   const shuffled = req?.method === 'POST' ? randomTiles() : Array(25).fill('');
   const board = renderBoard(shuffled);
-  const messageFrame = req?.headers?.['content-type'] === 'application/json' && req?.method === 'POST' && req?.url?.includes('play')
-    ? `<meta name="of:post:redirect" content="https://www.basescrabble.xyz/frames/demo" />`
-    : '';
+  const messageFrame = '';
 
   return `<!DOCTYPE html>
   <html lang="en">
@@ -33,18 +31,17 @@ export default function renderDemo(req) {
       <meta name="viewport" content="width=device-width, initial-scale=1" />
       <meta property="og:title" content="Base Scrabble — Demo" />
       <meta property="og:image" content="https://www.basescrabble.xyz/icon.png" />
-      <meta name="of:version" content="vNext" />
-      <meta name="of:frame" content="vNext" />
+      <meta name="fc:frame:version" content="2024-02-01" />
       ${messageFrame}
-      <meta name="of:button:1" content="Shuffle Tiles" />
-      <meta name="of:button:1:action" content="post" />
-      <meta name="of:button:1:target" content="https://www.basescrabble.xyz/frames/demo" />
-      <meta name="of:button:2" content="Play Move" />
-      <meta name="of:button:2:action" content="post" />
-      <meta name="of:button:2:post_url" content="https://www.basescrabble.xyz/frames/demo/play" />
-      <meta name="of:button:3" content="Back to Home" />
-      <meta name="of:button:3:action" content="post" />
-      <meta name="of:button:3:target" content="https://www.basescrabble.xyz/frames/welcome" />
+      <meta name="fc:frame:button:1" content="Shuffle Tiles" />
+      <meta name="fc:frame:button:1:action" content="post" />
+      <meta name="fc:frame:button:1:target" content="https://www.basescrabble.xyz/frames/demo" />
+      <meta name="fc:frame:button:2" content="Play Move" />
+      <meta name="fc:frame:button:2:action" content="post" />
+      <meta name="fc:frame:button:2:target" content="https://www.basescrabble.xyz/frames/demo/play" />
+      <meta name="fc:frame:button:3" content="Back to Home" />
+      <meta name="fc:frame:button:3:action" content="post" />
+      <meta name="fc:frame:button:3:target" content="https://www.basescrabble.xyz/frames/welcome" />
       <title>Base Scrabble — Demo</title>
     </head>
     <body style="display:flex;align-items:center;justify-content:center;height:100vh;background:#0f172a;color:#fff;font-family:system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;">

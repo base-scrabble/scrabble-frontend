@@ -7,19 +7,16 @@ export default function renderWelcome() {
       <meta name="viewport" content="width=device-width, initial-scale=1" />
       <meta property="og:title" content="Base Scrabble — Mini App" />
       <meta property="og:image" content="https://www.basescrabble.xyz/icon.png" />
-      <meta name="of:version" content="vNext" />
-      <meta name="of:accepts:xmtp" content="1" />
-      <meta name="of:accepts:warpcast" content="1" />
-      <meta name="of:frame" content="vNext" />
-      <meta name="of:button:1" content="Join Waitlist" />
-      <meta name="of:button:1:action" content="link" />
-      <meta name="of:button:1:target" content="https://www.basescrabble.xyz/waitlist" />
-      <meta name="of:button:2" content="Play Demo" />
-      <meta name="of:button:2:action" content="post" />
-      <meta name="of:button:2:target" content="https://www.basescrabble.xyz/frames/demo" />
-      <meta name="of:button:3" content="Rules" />
-      <meta name="of:button:3:action" content="post" />
-      <meta name="of:button:3:target" content="https://www.basescrabble.xyz/frames/rules" />
+      <meta name="fc:frame:version" content="2024-02-01" />
+      <meta name="fc:frame:button:1" content="Join Waitlist" />
+      <meta name="fc:frame:button:1:action" content="link" />
+      <meta name="fc:frame:button:1:target" content="https://www.basescrabble.xyz/waitlist" />
+      <meta name="fc:frame:button:2" content="Play Demo" />
+      <meta name="fc:frame:button:2:action" content="post" />
+      <meta name="fc:frame:button:2:target" content="https://www.basescrabble.xyz/frames/demo" />
+      <meta name="fc:frame:button:3" content="Rules" />
+      <meta name="fc:frame:button:3:action" content="post" />
+      <meta name="fc:frame:button:3:target" content="https://www.basescrabble.xyz/frames/rules" />
       <title>Base Scrabble — Mini App</title>
     </head>
     <body style="display:flex;align-items:center;justify-content:center;height:100vh;background:#0f172a;color:#fff;font-family:system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;">

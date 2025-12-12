@@ -7,11 +7,10 @@ export default function renderRules() {
       <meta name="viewport" content="width=device-width, initial-scale=1" />
       <meta property="og:title" content="Base Scrabble — Rules" />
       <meta property="og:image" content="https://www.basescrabble.xyz/icon.png" />
-      <meta name="of:version" content="vNext" />
-      <meta name="of:frame" content="vNext" />
-      <meta name="of:button:1" content="Back to Home" />
-      <meta name="of:button:1:action" content="post" />
-      <meta name="of:button:1:target" content="https://www.basescrabble.xyz/frames/welcome" />
+      <meta name="fc:frame:version" content="2024-02-01" />
+      <meta name="fc:frame:button:1" content="Back to Home" />
+      <meta name="fc:frame:button:1:action" content="post" />
+      <meta name="fc:frame:button:1:target" content="https://www.basescrabble.xyz/frames/welcome" />
       <title>Base Scrabble — Rules</title>
     </head>
     <body style="display:flex;align-items:center;justify-content:center;height:100vh;background:#0f172a;color:#fff;font-family:system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;">
