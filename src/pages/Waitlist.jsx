@@ -318,6 +318,9 @@ export default function Waitlist() {
             {error && <p className="text-red-600 mt-2">{error}</p>}
           </form>
         )}
+        <div className="mt-4 text-center">
+          <a href="https://www.basescrabble.xyz/frames/welcome" className="text-blue-600 dark:text-blue-300 underline font-bold">Open Farcaster Mini App</a>
+        </div>
       </div>
 
       {/* Animations CSS */}
