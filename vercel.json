@@ -4,6 +4,7 @@
   "framework": "vite",
   "installCommand": "npm install",
   "rewrites": [
+    { "source": "/frames/:path*", "destination": "/api/frames?path=/frames/:path*" },
     { "source": "/", "destination": "/waitlist" },
     { "source": "/success", "destination": "/success" },
     { "source": "/(.*)", "destination": "/index.html" }
