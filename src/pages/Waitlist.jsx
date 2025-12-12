@@ -48,9 +48,19 @@ export default function Waitlist() {
   const [refFromUrl, setRefFromUrl] = useState("");
   useEffect(() => {
     try {
-      const params = new URLSearchParams(window.location.search);
-      const ref = (params.get("ref") || "").trim();
+      const url = new URL(window.location.href);
+      // Prefer query param ?ref=CODE
+      const fromQuery = (url.searchParams.get("ref") || "").trim();
+      // Also support legacy path style /waitlist/CODE
+      const parts = url.pathname.split("/").filter(Boolean);
+      const fromPath = parts[0] === "waitlist" && parts.length >= 2 ? (parts[1] || "").trim() : "";
+      const ref = fromQuery || fromPath;
       if (ref) setRefFromUrl(ref);
+      // If path style was used, normalize URL to query style for consistency
+      if (!fromQuery && fromPath) {
+        const normalized = `${url.origin}/waitlist?ref=${fromPath}`;
+        window.history.replaceState({}, "", normalized);
+      }
     } catch {}
   }, []);
 
@@ -112,14 +122,16 @@ export default function Waitlist() {
   };
 
   const handleShare = () => {
+    const link = referralLink || `https://www.basescrabble.xyz/waitlist${refFromUrl ? `?ref=${refFromUrl}` : ""}`;
+    const shareText = `Join the waitlist and earn XP: ${link}`;
     if (navigator.share) {
       navigator.share({
         title: 'Join me on Based Scrabble!',
-        text: 'Join the waitlist and earn XP:',
-        url: referralLink,
+        text: shareText,
+        url: link,
       });
     } else {
-      handleCopy();
+      navigator.clipboard.writeText(link);
       alert('Link copied! Share is not supported on this device.');
     }
   };
