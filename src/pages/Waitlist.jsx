@@ -84,6 +84,27 @@ export default function Waitlist() {
       setReferralLink(`https://www.basescrabble.xyz/waitlist?ref=${joined.code}`);
       if (typeof joined.referralCount === 'number') setReferralCount(joined.referralCount);
       setSuccess(true);
+
+      // Lightweight polling to refresh referral count every 5s and on tab focus
+      let pollId = null;
+      const fetchCount = async () => {
+        try {
+          const r = await fetch(`${API_BASE}/waitlist/${joined.code}/referrals`);
+          if (!r.ok) return;
+          const data = await r.json();
+          if (data?.success && typeof data?.referralCount === 'number') {
+            setReferralCount(data.referralCount);
+          }
+        } catch {}
+      };
+      fetchCount();
+      pollId = setInterval(fetchCount, 5000);
+      const onVisible = () => { if (document.visibilityState === 'visible') fetchCount(); };
+      document.addEventListener('visibilitychange', onVisible);
+      return () => {
+        if (pollId) clearInterval(pollId);
+        document.removeEventListener('visibilitychange', onVisible);
+      };
     }
   }, [joined]);
 
