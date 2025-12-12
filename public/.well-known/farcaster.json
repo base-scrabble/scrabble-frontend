@@ -6,5 +6,9 @@
   "frames": [
     { "path": "/frames/welcome" }
   ],
-  "accountAssociation": null
+  "accountAssociation": {
+    "header": "eyJmaWQiOjUyMjg2NywidHlwZSI6ImN1c3RvZHkiLCJrZXkiOiIweDVkM2JhYTVCRDg0NGMzM0M0ODA3M0I4RTcxREJDQThDQTNFMDM0RUUifQ",
+    "payload": "eyJkb21haW4iOiJiYXNlc2NyYWJibGUueHl6In0",
+    "signature": "knK+pJJTyRACFmCZ8DNlQ/tbXANr8Xxf2Ul+5Pqani4C4mderL+vWLdLupUjeodtBcZcdZPF98NJpGKcdeqV1xs="
+  }
 }
