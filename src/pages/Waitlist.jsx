@@ -44,32 +44,41 @@ export default function Waitlist() {
   const [baQR, setBaQR] = useState("");
   const [xpAnim, setXpAnim] = useState(null);
 
-  // Read ?ref=<code> from URL to support referral attribution
+  // Read ?ref=<code> from URL; if already joined, prefer own code and preserve state
   const [refFromUrl, setRefFromUrl] = useState("");
   useEffect(() => {
     try {
       const url = new URL(window.location.href);
-      // Prefer query param ?ref=CODE
       const fromQuery = (url.searchParams.get("ref") || "").trim();
-      // Also support legacy path style /waitlist/CODE
       const parts = url.pathname.split("/").filter(Boolean);
       const fromPath = parts[0] === "waitlist" && parts.length >= 2 ? (parts[1] || "").trim() : "";
       const ref = fromQuery || fromPath;
+
+      const storedJoined = getLocal("bs_waitlist_joined", null);
+      const hasJoined = storedJoined && storedJoined.code;
+
+      if (hasJoined) {
+        // If user already joined, force URL to show their own code and keep their state
+        const ownCode = storedJoined.code;
+        if (!ref || ref !== ownCode) {
+          const normalized = `${url.origin}/waitlist?ref=${ownCode}`;
+          window.history.replaceState({}, "", normalized);
+        }
+        setRefFromUrl(storedJoined.code);
+        setJoined(storedJoined);
+        setSuccess(true);
+        return;
+      }
+
+      // Not joined yet: normalize and keep referral for attribution
       if (ref) setRefFromUrl(ref);
-      // If path style was used, normalize URL to query style for consistency
       if (!fromQuery && fromPath) {
         const normalized = `${url.origin}/waitlist?ref=${fromPath}`;
         window.history.replaceState({}, "", normalized);
       }
-      // IMPORTANT: If visiting via a referral link, always show the form for the recipient
-      // and do not auto-load any prior joined state.
-      if (ref) {
-        try {
-          localStorage.removeItem("bs_waitlist_joined");
-        } catch {}
-        setJoined(null);
-        setSuccess(false);
-      }
+      // Show the form (no clearing needed since there's no joined state yet)
+      setJoined(null);
+      setSuccess(false);
     } catch {}
   }, []);
 
@@ -141,6 +150,13 @@ export default function Waitlist() {
         setReferralLink(`https://www.basescrabble.xyz/waitlist?ref=${data.code}`);
         setReferralCount(data.referralCount);
         setSuccess(true);
+        // Replace URL with user's own code so refresh keeps their panel
+        try {
+          const url = new URL(window.location.href);
+          const normalized = `${url.origin}/waitlist?ref=${data.code}`;
+          window.history.replaceState({}, "", normalized);
+          setRefFromUrl(data.code);
+        } catch {}
       } else {
         setError(data.message || "Unknown error");
       }
@@ -241,7 +257,7 @@ export default function Waitlist() {
             <button onClick={handleCopy} className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-2 rounded-lg font-bold">Copy Link</button>
             <button onClick={handleShare} className="bg-gradient-to-r from-green-500 to-blue-500 text-white px-4 py-2 rounded-lg font-bold">Share</button>
           </div>
-          <div className="mt-4">Referrals: <span className="font-bold text-purple-700 dark:text-purple-300">{joined.referralCount}</span></div>
+          <div className="mt-4">Referrals: <span className="font-bold text-purple-700 dark:text-purple-300">{referralCount}</span></div>
         </div>
       )}
 
