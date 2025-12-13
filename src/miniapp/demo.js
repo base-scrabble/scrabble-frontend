@@ -30,19 +30,19 @@ export default function renderDemo(req) {
       <meta charset="utf-8" />
       <meta name="viewport" content="width=device-width, initial-scale=1" />
       <meta property="og:title" content="Base Scrabble — Demo" />
-      <meta property="og:image" content="https://www.basescrabble.xyz/icon.png" />
-      <meta name="fc:frame:image" content="https://www.basescrabble.xyz/frame-1200x630.png" />
+      <meta property="og:image" content="https://basescrabble.xyz/icon.png" />
+      <meta name="fc:frame:image" content="https://basescrabble.xyz/frame-1200x630.png" />
       <meta name="fc:frame:version" content="2024-02-01" />
       ${messageFrame}
       <meta name="fc:frame:button:1" content="Shuffle Tiles" />
       <meta name="fc:frame:button:1:action" content="post" />
-      <meta name="fc:frame:button:1:target" content="https://www.basescrabble.xyz/frames/demo" />
+      <meta name="fc:frame:button:1:target" content="https://basescrabble.xyz/frames/demo" />
       <meta name="fc:frame:button:2" content="Play Move" />
       <meta name="fc:frame:button:2:action" content="post" />
-      <meta name="fc:frame:button:2:target" content="https://www.basescrabble.xyz/frames/demo/play" />
+      <meta name="fc:frame:button:2:target" content="https://basescrabble.xyz/frames/demo/play" />
       <meta name="fc:frame:button:3" content="Back to Home" />
       <meta name="fc:frame:button:3:action" content="post" />
-      <meta name="fc:frame:button:3:target" content="https://www.basescrabble.xyz/frames/welcome" />
+      <meta name="fc:frame:button:3:target" content="https://basescrabble.xyz/frames/welcome" />
       <title>Base Scrabble — Demo</title>
     </head>
     <body style="display:flex;align-items:center;justify-content:center;height:100vh;background:#0f172a;color:#fff;font-family:system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;">
@@ -52,7 +52,7 @@ export default function renderDemo(req) {
         <div style="margin:16px auto;">${board}</div>
         <p style="margin:16px 0 0 0;font-size:13px;color:#e5e7eb;">Nice move! Full game coming soon.</p>
         <p style="margin:16px 0 0 0;font-size:13px;color:#93c5fd;">
-          <a href="https://www.basescrabble.xyz/frames/welcome" style="color:#93c5fd;text-decoration:underline;">Back to Home</a>
+          <a href="https://basescrabble.xyz/frames/welcome" style="color:#93c5fd;text-decoration:underline;">Back to Home</a>
         </p>
       </div>
     </body>

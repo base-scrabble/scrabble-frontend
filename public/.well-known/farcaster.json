@@ -1,8 +1,8 @@
 {
   "version": "2.0",
   "name": "Base Scrabble Mini App",
-  "icon": "https://www.basescrabble.xyz/icon-256.png",
-  "home": "https://www.basescrabble.xyz/frames/welcome",
+  "icon": "https://basescrabble.xyz/icon-256.png",
+  "home": "https://basescrabble.xyz/frames/welcome",
   "frames": [
     { "path": "/frames/welcome" }
   ],

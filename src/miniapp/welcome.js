@@ -6,18 +6,18 @@ export default function renderWelcome() {
       <meta charset="utf-8" />
       <meta name="viewport" content="width=device-width, initial-scale=1" />
       <meta property="og:title" content="Base Scrabble — Mini App" />
-      <meta property="og:image" content="https://www.basescrabble.xyz/icon.png" />
-      <meta name="fc:frame:image" content="https://www.basescrabble.xyz/frame-1200x630.png" />
+      <meta property="og:image" content="https://basescrabble.xyz/icon.png" />
+      <meta name="fc:frame:image" content="https://basescrabble.xyz/frame-1200x630.png" />
       <meta name="fc:frame:version" content="2024-02-01" />
       <meta name="fc:frame:button:1" content="Join Waitlist" />
       <meta name="fc:frame:button:1:action" content="link" />
-      <meta name="fc:frame:button:1:target" content="https://www.basescrabble.xyz/waitlist" />
+      <meta name="fc:frame:button:1:target" content="https://basescrabble.xyz/waitlist" />
       <meta name="fc:frame:button:2" content="Play Demo" />
       <meta name="fc:frame:button:2:action" content="post" />
-      <meta name="fc:frame:button:2:target" content="https://www.basescrabble.xyz/frames/demo" />
+      <meta name="fc:frame:button:2:target" content="https://basescrabble.xyz/frames/demo" />
       <meta name="fc:frame:button:3" content="Rules" />
       <meta name="fc:frame:button:3:action" content="post" />
-      <meta name="fc:frame:button:3:target" content="https://www.basescrabble.xyz/frames/rules" />
+      <meta name="fc:frame:button:3:target" content="https://basescrabble.xyz/frames/rules" />
       <title>Base Scrabble — Mini App</title>
     </head>
     <body style="display:flex;align-items:center;justify-content:center;height:100vh;background:#0f172a;color:#fff;font-family:system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;">
@@ -26,15 +26,15 @@ export default function renderWelcome() {
         <p style="margin:0 0 16px 0;font-size:14px;color:#93c5fd;">Welcome! Choose an option below to continue.</p>
         <ol style="text-align:left;color:#e5e7eb;font-size:14px;">
           <li>
-            <a href="https://www.basescrabble.xyz/waitlist" style="color:#93c5fd;text-decoration:underline;">Join Waitlist</a>
+            <a href="https://basescrabble.xyz/waitlist" style="color:#93c5fd;text-decoration:underline;">Join Waitlist</a>
             <span style="color:#9ca3af;"> → opens website</span>
           </li>
           <li>
-            <a href="https://www.basescrabble.xyz/frames/demo" style="color:#93c5fd;text-decoration:underline;">Play Demo</a>
+            <a href="https://basescrabble.xyz/frames/demo" style="color:#93c5fd;text-decoration:underline;">Play Demo</a>
             <span style="color:#9ca3af;"> → interactive mini board</span>
           </li>
           <li>
-            <a href="https://www.basescrabble.xyz/frames/rules" style="color:#93c5fd;text-decoration:underline;">Rules</a>
+            <a href="https://basescrabble.xyz/frames/rules" style="color:#93c5fd;text-decoration:underline;">Rules</a>
             <span style="color:#9ca3af;"> → quick summary</span>
           </li>
         </ol>
