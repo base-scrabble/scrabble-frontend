@@ -285,8 +285,7 @@ function AppRoutesInner() {
         <Route path="/waitlist" element={<Waitlist />} />
         <Route path="/waitlist/success" element={<Success />} />
 
-        {/* Farcaster manifest route */}
-        <Route path="/.well-known/farcaster.json" element={<RedirectJson file="/farcaster-frame.json" />} />
+        {/* Farcaster manifest is served from public/.well-known/farcaster.json by the host */}
 
         {/* Fallback -> home */}
         <Route
