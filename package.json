@@ -8,7 +8,7 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview --host=127.0.0.1 --port=4173",
-    "assets:resize": "node scripts/resize-images.mjs"
+    "assets:resize": "node scripts/resize-images.js"
   },
   "dependencies": {
     "@coinbase/onchainkit": "^1.1.2",
