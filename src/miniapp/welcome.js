@@ -7,7 +7,7 @@ export default function renderWelcome() {
       <meta name="viewport" content="width=device-width, initial-scale=1" />
       <meta property="og:title" content="Base Scrabble — Mini App" />
       <meta property="og:image" content="https://www.basescrabble.xyz/icon.png" />
-      <meta name="fc:frame:image" content="https://www.basescrabble.xyz/icon.png" />
+      <meta name="fc:frame:image" content="https://basescrabble.xyz/frame-1200x630.png" />
       <meta name="fc:frame:version" content="2024-02-01" />
       <meta name="fc:frame:button:1" content="Join Waitlist" />
       <meta name="fc:frame:button:1:action" content="link" />
