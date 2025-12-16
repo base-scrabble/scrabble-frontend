@@ -5,19 +5,12 @@
   "installCommand": "npm install",
   "rewrites": [
     { "source": "/.well-known/farcaster.json", "destination": "/.well-known/farcaster.json" },
-    { "source": "/frames/:path*", "destination": "/api/frames?path=/frames/:path*" },
     { "source": "/", "destination": "/waitlist" },
     { "source": "/success", "destination": "/success" },
     { "source": "/(.*)", "destination": "/index.html" }
   ],
   "headers": [
-    {
-      "source": "/frames/:path*",
-      "headers": [
-        { "key": "Content-Type", "value": "text/html; charset=utf-8" },
-        { "key": "Cache-Control", "value": "no-store" }
-      ]
-    },
+    
     {
       "source": "/.well-known/farcaster.json",
       "headers": [

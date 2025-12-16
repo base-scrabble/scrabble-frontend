@@ -2,9 +2,9 @@
   "version": "2.0",
   "name": "Base Scrabble Mini App",
   "icon": "https://basescrabble.xyz/icon-256.png",
-  "home": "https://basescrabble.xyz/frames/welcome",
+  "home": "https://basescrabble.xyz/frames/welcome.html",
   "frames": [
-    { "path": "/frames/welcome" }
+    { "path": "/frames/welcome.html" }
   ],
   "accountAssociation": {
     "header": "eyJmaWQiOjUyMjg2NywidHlwZSI6ImN1c3RvZHkiLCJrZXkiOiIweDVkM2JhYTVCRDg0NGMzM0M0ODA3M0I4RTcxREJDQThDQTNFMDM0RUUifQ",
