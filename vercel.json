@@ -1,22 +1,43 @@
-{
-  "buildCommand": "npm run build",
-  "outputDirectory": "dist",
-  "framework": "vite",
-  "installCommand": "npm install",
-  "rewrites": [
-    { "source": "/.well-known/farcaster.json", "destination": "/.well-known/farcaster.json" },
-    { "source": "/", "destination": "/waitlist" },
-    { "source": "/success", "destination": "/success" },
-    { "source": "/(.*)", "destination": "/index.html" }
-  ],
-  "headers": [
-    
-    {
-      "source": "/.well-known/farcaster.json",
-      "headers": [
-        { "key": "Content-Type", "value": "application/json; charset=utf-8" },
-        { "key": "Cache-Control", "value": "no-store" }
-      ]
-    }
-  ]
+﻿{
+    "buildCommand":  "npm run build",
+    "outputDirectory":  "dist",
+    "framework":  "vite",
+    "installCommand":  "npm install",
+    "rewrites":  [
+                     {
+                         "destination":  "/frames/",
+                         "source":  "/frames/(.*)"
+                     },
+                     {
+                         "source":  "/.well-known/farcaster.json",
+                         "destination":  "/.well-known/farcaster.json"
+                     },
+                     {
+                         "source":  "/",
+                         "destination":  "/waitlist"
+                     },
+                     {
+                         "source":  "/success",
+                         "destination":  "/success"
+                     },
+                     {
+                         "source":  "/(.*)",
+                         "destination":  "/index.html"
+                     }
+                 ],
+    "headers":  [
+                    {
+                        "source":  "/.well-known/farcaster.json",
+                        "headers":  [
+                                        {
+                                            "key":  "Content-Type",
+                                            "value":  "application/json; charset=utf-8"
+                                        },
+                                        {
+                                            "key":  "Cache-Control",
+                                            "value":  "no-store"
+                                        }
+                                    ]
+                    }
+                ]
 }
