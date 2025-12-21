@@ -4,7 +4,9 @@
   "icon": "https://basescrabble.xyz/icon-256.png",
   "home": "https://basescrabble.xyz/frames/welcome.html",
   "frames": [
-    { "path": "/frames/welcome.html" }
+    { "path": "/frames/welcome.html" },
+    { "path": "/frames/demo.html" },
+    { "path": "/frames/rules.html" }
   ],
   "accountAssociation": {
     "header": "eyJmaWQiOjUyMjg2NywidHlwZSI6ImN1c3RvZHkiLCJrZXkiOiIweDVkM2JhYTVCRDg0NGMzM0M0ODA3M0I4RTcxREJDQThDQTNFMDM0RUUifQ",

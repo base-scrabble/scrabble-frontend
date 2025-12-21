@@ -91,7 +91,7 @@ export default function Waitlist() {
   useEffect(() => {
     if (joined && joined.code) {
       // Use locally generated frontend invite link and counts from join response only
-      setReferralLink(`https://www.basescrabble.xyz/waitlist?ref=${joined.code}`);
+      setReferralLink(`https://basescrabble.xyz/waitlist?ref=${joined.code}`);
       if (typeof joined.referralCount === 'number') setReferralCount(joined.referralCount);
       setSuccess(true);
 
@@ -159,7 +159,7 @@ export default function Waitlist() {
         setLocal("bs_waitlist_joined", data);
         setCode(data.code);
         // Always generate a frontend invite link for sharing
-        setReferralLink(`https://www.basescrabble.xyz/waitlist?ref=${data.code}`);
+        setReferralLink(`https://basescrabble.xyz/waitlist?ref=${data.code}`);
         setReferralCount(data.referralCount);
         setSuccess(true);
         // Replace URL with user's own code so refresh keeps their panel
@@ -184,7 +184,7 @@ export default function Waitlist() {
   };
 
   const handleShare = () => {
-    const link = referralLink || `https://www.basescrabble.xyz/waitlist${refFromUrl ? `?ref=${refFromUrl}` : ""}`;
+    const link = referralLink || `https://basescrabble.xyz/waitlist${refFromUrl ? `?ref=${refFromUrl}` : ""}`;
     const shareText = `I’m early on Base Scrabble 🧩\nJoin the waitlist and earn XP with my referral — don’t miss your early advantage.\n\n👉 ${link}`;
     if (navigator.share) {
       navigator.share({
@@ -319,7 +319,7 @@ export default function Waitlist() {
           </form>
         )}
         <div className="mt-4 text-center">
-          <a href="https://www.basescrabble.xyz/frames/welcome" className="text-blue-600 dark:text-blue-300 underline font-bold">Open Farcaster Mini App</a>
+          <a href="https://basescrabble.xyz/frames/welcome.html" className="text-blue-600 dark:text-blue-300 underline font-bold">Open Farcaster Mini App</a>
         </div>
       </div>
 
