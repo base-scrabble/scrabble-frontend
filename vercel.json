@@ -1,8 +1,5 @@
 ﻿{
-    "buildCommand": "npm run build",
-    "outputDirectory": "dist",
-    "framework": "vite",
-    "installCommand": "npm install",
+    "version": 2,
     "rewrites": [
         { "source": "/frames/(.*)", "destination": "/frames/$1" },
         { "source": "/.well-known/farcaster.json", "destination": "/.well-known/farcaster.json" },
