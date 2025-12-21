@@ -3,6 +3,12 @@
   "name": "Base Scrabble Mini App",
   "icon": "https://basescrabble.xyz/icon-256.png",
   "home": "https://basescrabble.xyz/frames/welcome.html",
+  "miniapp": {
+    "version": "1",
+    "name": "Base Scrabble",
+    "iconUrl": "https://basescrabble.xyz/icon-256.png",
+    "homeUrl": "https://basescrabble.xyz/frames/welcome.html"
+  },
   "frames": [
     { "path": "/frames/welcome.html" },
     { "path": "/frames/demo.html" },
