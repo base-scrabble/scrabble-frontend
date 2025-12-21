@@ -1,17 +1,10 @@
 ﻿{
-    "version": 2,
-    "routes": [
-        { "src": "/frames/(.*)", "dest": "/frames/$1" },
+    "headers": [
         {
-            "src": "/.well-known/farcaster.json",
-            "dest": "/.well-known/farcaster.json",
-            "headers": {
-                "Content-Type": "application/json; charset=utf-8",
-                "Cache-Control": "no-store"
-            }
-        },
-        { "src": "/", "dest": "/waitlist" },
-        { "src": "/success", "dest": "/success" },
-        { "src": "/(.*)", "dest": "/index.html" }
+            "source": "/.well-known/farcaster.json",
+            "headers": [
+                { "key": "Cache-Control", "value": "no-store" }
+            ]
+        }
     ]
 }
