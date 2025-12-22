@@ -7,7 +7,7 @@
     "version": "1",
     "name": "Base Scrabble",
     "iconUrl": "https://basescrabble.xyz/icon-256.png",
-    "homeUrl": "https://basescrabble.xyz/frames/welcome.html"
+    "homeUrl": "https://basescrabble.xyz/waitlist"
   },
   "frames": [
     { "path": "/frames/welcome.html" },
