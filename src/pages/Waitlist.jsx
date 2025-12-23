@@ -54,10 +54,8 @@ function setLocal(key, val) {
 
 export default function Waitlist() {
   const [email, setEmail] = useState("");
-  const [code, setCode] = useState("");
   const [referralLink, setReferralLink] = useState("");
   const [referralCount, setReferralCount] = useState(0);
-  const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [xp, setXp] = useState(() => getLocal("bs_xp", 0));
@@ -90,7 +88,6 @@ export default function Waitlist() {
         }
         setRefFromUrl(storedJoined.code);
         setJoined(storedJoined);
-        setSuccess(true);
         return;
       }
 
@@ -102,8 +99,9 @@ export default function Waitlist() {
       }
       // Show the form (no clearing needed since there's no joined state yet)
       setJoined(null);
-      setSuccess(false);
-    } catch {}
+    } catch {
+      // No-op: ignore invalid URLs / restricted environments
+    }
   }, []);
 
   useEffect(() => {
@@ -116,7 +114,6 @@ export default function Waitlist() {
       // Use locally generated frontend invite link and counts from join response only
       setReferralLink(`https://basescrabble.xyz/waitlist?ref=${joined.code}`);
       if (typeof joined.referralCount === 'number') setReferralCount(joined.referralCount);
-      setSuccess(true);
 
 		// If no backend API base is configured, skip referral polling.
 		if (!canUseBackendApi(API_BASE)) {
@@ -133,7 +130,9 @@ export default function Waitlist() {
           if (data?.success && typeof data?.referralCount === 'number') {
             setReferralCount(data.referralCount);
           }
-        } catch {}
+        } catch {
+          // No-op: referral polling is best-effort
+        }
       };
       fetchCount();
       pollId = setInterval(fetchCount, 5000);
@@ -186,7 +185,7 @@ export default function Waitlist() {
 				if (!res.ok || !data?.success) {
 					data = null;
 				}
-			} catch {
+      } catch {
 				data = null;
 			}
 		}
@@ -205,18 +204,18 @@ export default function Waitlist() {
 
 		setJoined(data);
 		setLocal("bs_waitlist_joined", data);
-		setCode(data.code);
 		setReferralLink(`https://basescrabble.xyz/waitlist?ref=${data.code}`);
 		setReferralCount(data.referralCount || 0);
-		setSuccess(true);
 		// Replace URL with user's own code so refresh keeps their panel
 		try {
 			const url = new URL(window.location.href);
 			const normalized = `${url.origin}/waitlist?ref=${data.code}`;
 			window.history.replaceState({}, "", normalized);
 			setRefFromUrl(data.code);
-		} catch {}
-    } catch (err) {
+    } catch {
+      // No-op: ignore history/url failures
+    }
+    } catch {
       setError("Server error");
     }
     setLoading(false);
@@ -228,10 +227,29 @@ export default function Waitlist() {
   };
 
   const handleShare = () => {
-    const link = referralLink || `https://basescrabble.xyz/waitlist${refFromUrl ? `?ref=${refFromUrl}` : ""}`;
+    const canonicalInviteLink = `https://basescrabble.xyz/waitlist${refFromUrl ? `?ref=${refFromUrl}` : ""}`;
+    const link = referralLink || canonicalInviteLink;
     const shareText = `I’m early on @basescrabble 🧩\nJoin the waitlist and earn XP with my referral — don’t miss your early advantage.\n\n👉 ${link}`;
 
     setShareNotice("");
+
+    const tryComposeCast = async () => {
+      try {
+        const mod = await import('@farcaster/miniapp-sdk');
+        const sdk = mod?.sdk ?? mod?.default ?? mod;
+        const composeCast = sdk?.actions?.composeCast;
+        if (typeof composeCast !== 'function') return false;
+
+        // Use the SDK composer so the embed is attached cleanly and opens in-app.
+        await composeCast({
+          text: shareText,
+          embeds: [link],
+        });
+        return true;
+      } catch {
+        return false;
+      }
+    };
 
     const openWarpcastCompose = async () => {
       // Include the waitlist link as an embed so Warpcast renders the Mini App card/preview.
@@ -256,7 +274,9 @@ export default function Waitlist() {
         setTimeout(() => {
           try {
             window.location.href = composeUrl;
-          } catch {}
+          } catch {
+            // No-op: ignore navigation failures
+          }
         }, 700);
         return true;
       } catch {
@@ -273,7 +293,10 @@ export default function Waitlist() {
     const ua = (typeof navigator !== 'undefined' ? (navigator.userAgent || '') : '');
     const looksLikeFarcaster = /farcaster|warpcast/i.test(ua);
     if (looksLikeFarcaster) {
-      void openWarpcastCompose();
+      void (async () => {
+        const composed = await tryComposeCast();
+        if (!composed) await openWarpcastCompose();
+      })();
       return;
     }
 
@@ -281,7 +304,10 @@ export default function Waitlist() {
     // and recipients click-through lands in a normal browser. Prefer Warpcast compose.
     const looksLikeBaseApp = /\bbase\b|coinbase/i.test(ua);
     if (looksLikeBaseApp) {
-      void openWarpcastCompose();
+      void (async () => {
+        const composed = await tryComposeCast();
+        if (!composed) await openWarpcastCompose();
+      })();
       return;
     }
 
