@@ -66,6 +66,7 @@ export default function Waitlist() {
   const [fcQR, setFcQR] = useState("");
   const [baQR, setBaQR] = useState("");
   const [xpAnim, setXpAnim] = useState(null);
+  const [shareNotice, setShareNotice] = useState("");
 
   // Read ?ref=<code> from URL; if already joined, prefer own code and preserve state
   const [refFromUrl, setRefFromUrl] = useState("");
@@ -229,15 +230,55 @@ export default function Waitlist() {
   const handleShare = () => {
     const link = referralLink || `https://basescrabble.xyz/waitlist${refFromUrl ? `?ref=${refFromUrl}` : ""}`;
     const shareText = `I’m early on Base Scrabble 🧩\nJoin the waitlist and earn XP with my referral — don’t miss your early advantage.\n\n👉 ${link}`;
+
+    setShareNotice("");
+
+    const openWarpcastCompose = async () => {
+      const composeUrl = `https://warpcast.com/~/compose?text=${encodeURIComponent(shareText)}`;
+      try {
+        const mod = await import('@farcaster/miniapp-sdk');
+        const sdk = mod?.sdk ?? mod?.default ?? mod;
+        const openUrl = sdk?.actions?.openUrl ?? sdk?.openUrl;
+        if (typeof openUrl === 'function') {
+          await openUrl(composeUrl);
+          return true;
+        }
+      } catch {
+        // ignore
+      }
+      try {
+        window.location.href = composeUrl;
+        return true;
+      } catch {
+        return false;
+      }
+    };
+
+    // If we're in Farcaster, prefer opening a Warpcast compose flow.
+    const ua = (typeof navigator !== 'undefined' ? (navigator.userAgent || '') : '');
+    const looksLikeFarcaster = /farcaster|warpcast/i.test(ua);
+    if (looksLikeFarcaster) {
+      void openWarpcastCompose();
+      return;
+    }
+
     if (navigator.share) {
       navigator.share({
         title: 'Base Scrabble Waitlist',
         text: shareText,
         url: link,
+      }).catch(() => {
+        // user canceled
       });
-    } else {
+      return;
+    }
+
+    // Clipboard fallback (no blocking alert)
+    try {
       navigator.clipboard.writeText(shareText);
-      alert('Invite text copied! Share is not supported on this device.');
+      setShareNotice('Invite copied to clipboard.');
+    } catch {
+      setShareNotice('Copy failed on this device.');
     }
   };
 
@@ -361,9 +402,7 @@ export default function Waitlist() {
             {error && <p className="text-red-600 mt-2">{error}</p>}
           </form>
         )}
-        <div className="mt-4 text-center">
-          <a href="https://basescrabble.xyz/frames/welcome.html" className="text-blue-600 dark:text-blue-300 underline font-bold">Open Farcaster Mini App</a>
-        </div>
+			{shareNotice && <p className="text-sm text-gray-600 dark:text-gray-300 mt-3 text-center">{shareNotice}</p>}
       </div>
 
       {/* Animations CSS */}
