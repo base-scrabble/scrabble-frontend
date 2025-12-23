@@ -229,12 +229,13 @@ export default function Waitlist() {
 
   const handleShare = () => {
     const link = referralLink || `https://basescrabble.xyz/waitlist${refFromUrl ? `?ref=${refFromUrl}` : ""}`;
-    const shareText = `I’m early on Base Scrabble 🧩\nJoin the waitlist and earn XP with my referral — don’t miss your early advantage.\n\n👉 ${link}`;
+    const shareText = `I’m early on @basescrabble 🧩\nJoin the waitlist and earn XP with my referral — don’t miss your early advantage.\n\n👉 ${link}`;
 
     setShareNotice("");
 
     const openWarpcastCompose = async () => {
-      const composeUrl = `https://warpcast.com/~/compose?text=${encodeURIComponent(shareText)}`;
+      // Include the waitlist link as an embed so Warpcast renders the Mini App card/preview.
+      const composeUrl = `https://warpcast.com/~/compose?text=${encodeURIComponent(shareText)}&embeds[]=${encodeURIComponent(link)}`;
       try {
         const mod = await import('@farcaster/miniapp-sdk');
         const sdk = mod?.sdk ?? mod?.default ?? mod;
@@ -246,11 +247,25 @@ export default function Waitlist() {
       } catch {
         // ignore
       }
+
+      // Outside Farcaster (e.g. BaseApp), attempt Warpcast deep-link first so it opens the app.
+      const deepLink = `warpcast://~/compose?text=${encodeURIComponent(shareText)}&embeds[]=${encodeURIComponent(link)}`;
       try {
-        window.location.href = composeUrl;
+        window.location.href = deepLink;
+        // Fallback to https if the deep-link can't be handled.
+        setTimeout(() => {
+          try {
+            window.location.href = composeUrl;
+          } catch {}
+        }, 700);
         return true;
       } catch {
-        return false;
+        try {
+          window.location.href = composeUrl;
+          return true;
+        } catch {
+          return false;
+        }
       }
     };
 
@@ -258,6 +273,14 @@ export default function Waitlist() {
     const ua = (typeof navigator !== 'undefined' ? (navigator.userAgent || '') : '');
     const looksLikeFarcaster = /farcaster|warpcast/i.test(ua);
     if (looksLikeFarcaster) {
+      void openWarpcastCompose();
+      return;
+    }
+
+    // BaseApp and many mobile in-app browsers support share but it often opens system UI
+    // and recipients click-through lands in a normal browser. Prefer Warpcast compose.
+    const looksLikeBaseApp = /\bbase\b|coinbase/i.test(ua);
+    if (looksLikeBaseApp) {
       void openWarpcastCompose();
       return;
     }
