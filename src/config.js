@@ -6,16 +6,29 @@ const DEFAULT_WSS_RPC = 'wss://misty-proportionate-owl.base-sepolia.quiknode.pro
 // Backend (append /api so all fetch calls go through API routes)
 const isDev = import.meta.env.DEV;
 
-// In development use a relative path so Vite dev server proxy forwards to backend
-// In production use the explicit backend URL from env (or fallback)
-const RAILWAY_BACKEND = 'https://scrabble-backend-production.up.railway.app';
+// In development use a relative path so Vite dev server proxy forwards to backend.
+// In production prefer the explicit API base URL (Koyeb) from env.
+const DEFAULT_KOYEB_API_BASE = 'https://leading-deer-base-scrabble-7f7c59ec.koyeb.app/api';
+
+function normalizeApiBase(input) {
+  if (!input) return '';
+  const trimmed = String(input).trim().replace(/\/+$/, "");
+  // If caller provides an origin (no /api), append it.
+  if (/^https?:\/\//.test(trimmed) && !/\/api$/.test(trimmed)) {
+    return trimmed + '/api';
+  }
+  return trimmed;
+}
 
 export const API_BASE_URL = isDev
   ? '/api'
-  : (import.meta.env.VITE_BACKEND_URL || RAILWAY_BACKEND).replace(/\/$/, "") + "/api";
+  : normalizeApiBase(import.meta.env.VITE_API_BASE_URL)
+    || normalizeApiBase(import.meta.env.VITE_BACKEND_URL)
+    || DEFAULT_KOYEB_API_BASE;
 
-// WebSocket endpoint (defaults to Railway backend socket namespace)
-export const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || RAILWAY_BACKEND;
+// WebSocket endpoint (defaults to same host as API base)
+export const SOCKET_URL =
+  import.meta.env.VITE_SOCKET_URL || (API_BASE_URL === '/api' ? '' : API_BASE_URL.replace(/\/api$/, ''));
 
 // Privy Configuration
 export const PRIVY_APP_ID = import.meta.env.VITE_PRIVY_APP_ID;

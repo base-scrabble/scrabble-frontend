@@ -9,8 +9,9 @@ import { playRandomMove, passTurn } from './moves.js';
 import { saveState } from './compare.js';
 import { log } from '../utils/logger.js';
 
-const backendUrl = 'https://scrabble-backend-production.up.railway.app';
-const socketUrl = 'wss://scrabble-backend-production.up.railway.app';
+const DEFAULT_KOYEB_ORIGIN = 'https://leading-deer-base-scrabble-7f7c59ec.koyeb.app';
+const backendUrl = process.env.BACKEND_URL || DEFAULT_KOYEB_ORIGIN;
+const socketUrl = process.env.SOCKET_URL || DEFAULT_KOYEB_ORIGIN;
 const PLAYER_NAMES = ['Alpha', 'Bravo', 'Charlie'];
 
 function extractGameState(payload) {

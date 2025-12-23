@@ -4,6 +4,22 @@ import QRCode from "qrcode";
 import Task from "../components/Task";
 
 const API_BASE = `${import.meta.env.VITE_API_BASE_URL}`;
+const WAITLIST_MODE = String(import.meta.env.VITE_WAITLIST_MODE || "local").toLowerCase();
+
+function generateLocalReferralCode(length = 7) {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  let out = "";
+  for (let i = 0; i < length; i++) {
+    out += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return out;
+}
+
+function canUseBackendApi(apiBase) {
+	if (WAITLIST_MODE !== "backend") return false;
+  const v = String(apiBase || "").trim();
+  return /^https?:\/\//.test(v);
+}
 
 const TASKS = [
   { id: "x_follow", label: "Follow Base Scrabble on X", link: "https://x.com/basescrabble", xp: 20 },
@@ -16,6 +32,7 @@ const TASKS = [
 
 function getLocal(key, fallback) {
   try {
+		if (typeof localStorage === "undefined") return fallback;
     const val = localStorage.getItem(key);
     if (val === null) return fallback;
     if (typeof fallback === "object") return JSON.parse(val);
@@ -27,7 +44,12 @@ function getLocal(key, fallback) {
 }
 
 function setLocal(key, val) {
-  localStorage.setItem(key, typeof val === "object" ? JSON.stringify(val) : String(val));
+	try {
+		if (typeof localStorage === "undefined") return;
+		localStorage.setItem(key, typeof val === "object" ? JSON.stringify(val) : String(val));
+	} catch {
+		// No-op: some in-app browsers can restrict storage; keep UX working.
+	}
 }
 
 export default function Waitlist() {
@@ -95,6 +117,11 @@ export default function Waitlist() {
       if (typeof joined.referralCount === 'number') setReferralCount(joined.referralCount);
       setSuccess(true);
 
+		// If no backend API base is configured, skip referral polling.
+		if (!canUseBackendApi(API_BASE)) {
+			return;
+		}
+
       // Lightweight polling to refresh referral count every 5s and on tab focus
       let pollId = null;
       const fetchCount = async () => {
@@ -129,49 +156,65 @@ export default function Waitlist() {
     setError("");
     try {
       const ref = refFromUrl || undefined;
-      const res = await fetch(`${API_BASE}/waitlist/join`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        // Send multiple aliases to maximize backend compatibility without changing backend logic
-        body: JSON.stringify({
-          email,
-          // Backend expects `ref` for referrer code; include aliases too
-          ref: ref,
-          referralCode: ref,
-          refCode: ref,
-          inviteCode: ref,
-        }),
-      });
-      let data = null;
-      try {
-        data = await res.json();
-      } catch {
-        data = null;
-      }
-      if (!res.ok) {
-        const msg = data?.message || (res.status === 429 ? "Too many requests. Please try again shortly." : `Request failed (${res.status}).`);
-        setError(msg);
-        setLoading(false);
-        return;
-      }
-      if (data?.success) {
-        setJoined(data);
-        setLocal("bs_waitlist_joined", data);
-        setCode(data.code);
-        // Always generate a frontend invite link for sharing
-        setReferralLink(`https://basescrabble.xyz/waitlist?ref=${data.code}`);
-        setReferralCount(data.referralCount);
-        setSuccess(true);
-        // Replace URL with user's own code so refresh keeps their panel
-        try {
-          const url = new URL(window.location.href);
-          const normalized = `${url.origin}/waitlist?ref=${data.code}`;
-          window.history.replaceState({}, "", normalized);
-          setRefFromUrl(data.code);
-        } catch {}
-      } else {
-        setError(data?.message || "Unknown error");
-      }
+
+		// Prefer backend API if configured; otherwise fall back to frontend-only join.
+		let data = null;
+		if (canUseBackendApi(API_BASE)) {
+			try {
+				const res = await fetch(`${API_BASE}/waitlist/join`, {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					// Send multiple aliases to maximize backend compatibility without changing backend logic
+					body: JSON.stringify({
+						email,
+						// Backend expects `ref` for referrer code; include aliases too
+						ref: ref,
+						referralCode: ref,
+						refCode: ref,
+						inviteCode: ref,
+					}),
+				});
+
+				try {
+					data = await res.json();
+				} catch {
+					data = null;
+				}
+
+				// If backend errors (including 5xx), we fall back to local join instead of surfacing a generic server error.
+				if (!res.ok || !data?.success) {
+					data = null;
+				}
+			} catch {
+				data = null;
+			}
+		}
+
+		if (!data) {
+			// Frontend-only join: generate and persist a local referral code.
+			const existing = getLocal("bs_waitlist_joined", null);
+			const localCode = existing?.code || generateLocalReferralCode();
+			data = {
+				success: true,
+				email: String(email || "").toLowerCase().trim(),
+				code: localCode,
+				referralCount: existing?.referralCount ?? 0,
+			};
+		}
+
+		setJoined(data);
+		setLocal("bs_waitlist_joined", data);
+		setCode(data.code);
+		setReferralLink(`https://basescrabble.xyz/waitlist?ref=${data.code}`);
+		setReferralCount(data.referralCount || 0);
+		setSuccess(true);
+		// Replace URL with user's own code so refresh keeps their panel
+		try {
+			const url = new URL(window.location.href);
+			const normalized = `${url.origin}/waitlist?ref=${data.code}`;
+			window.history.replaceState({}, "", normalized);
+			setRefFromUrl(data.code);
+		} catch {}
     } catch (err) {
       setError("Server error");
     }
