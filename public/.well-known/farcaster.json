@@ -7,7 +7,27 @@
     "version": "1",
     "name": "Base Scrabble",
     "iconUrl": "https://basescrabble.xyz/icon-256.png",
-    "homeUrl": "https://basescrabble.xyz/waitlist"
+
+    "homeUrl": "https://basescrabble.xyz/waitlist",
+
+    "splashImageUrl": "https://basescrabble.xyz/icon-256.png",
+    "splashBackgroundColor": "#000000",
+
+    "subtitle": "Onchain word game",
+    "description": "Join the Base Scrabble waitlist and invite friends to earn XP.",
+    "tagline": "Play scrabble on Base",
+
+    "heroImageUrl": "https://basescrabble.xyz/frame-1200x630.png",
+    "screenshotUrls": [
+      "https://basescrabble.xyz/banner.png"
+    ],
+
+    "primaryCategory": "games",
+    "tags": ["scrabble", "game", "waitlist", "onchain", "base"],
+
+    "ogTitle": "Base Scrabble Waitlist",
+    "ogDescription": "Join the waitlist and invite friends to earn XP.",
+    "ogImageUrl": "https://basescrabble.xyz/frame-1200x630.png"
   },
   "frames": [
     { "path": "/frames/welcome.html" },
