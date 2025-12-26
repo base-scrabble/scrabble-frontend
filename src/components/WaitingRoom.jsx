@@ -186,6 +186,7 @@ export default function WaitingRoom({ gameId, gameData, setGameData, onStart, on
 
       pollState.isFetching = true;
       let scheduledFromCatch = false;
+      let postFinallyAction = null;
 
       try {
         const payload = await getGameState(resolvedGameId);
@@ -225,22 +226,28 @@ export default function WaitingRoom({ gameId, gameData, setGameData, onStart, on
 
         if (!allowScheduling || pollState.stopped || !mounted) {
           pollState.pendingReason = null;
-          return;
-        }
-
-        if (scheduledFromCatch) {
-          return;
-        }
-
-        if (pollState.pendingReason) {
+          postFinallyAction = { type: 'stop' };
+        } else if (scheduledFromCatch) {
+          postFinallyAction = { type: 'stop' };
+        } else if (pollState.pendingReason) {
           const pendingReason = pollState.pendingReason;
           pollState.pendingReason = null;
-          fetchLatestState(pendingReason);
-          return;
+          postFinallyAction = { type: 'fetchLatestState', reason: pendingReason };
+        } else {
+          postFinallyAction = { type: 'schedulePoll' };
         }
-
-        schedulePoll(DEFAULT_POLL_INTERVAL_MS);
       }
+
+      if (!postFinallyAction || postFinallyAction.type === 'stop') {
+        return;
+      }
+
+      if (postFinallyAction.type === 'fetchLatestState') {
+        fetchLatestState(postFinallyAction.reason);
+        return;
+      }
+
+      schedulePoll(DEFAULT_POLL_INTERVAL_MS);
     };
 
     fetchLatestState('initial-load');

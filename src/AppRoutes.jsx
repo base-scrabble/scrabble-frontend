@@ -1,5 +1,5 @@
 // src/AppRoutes.jsx
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   BrowserRouter,
   Routes,
@@ -37,7 +37,6 @@ import {
 
 import Waitlist from "./pages/Waitlist";
 import Success from "./pages/Success";
-import RedirectJson from "./components/RedirectJson";
 
 export default function AppRoutes() {
   return (

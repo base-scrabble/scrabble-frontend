@@ -38,6 +38,14 @@ export default [
     },
   },
   {
+    files: ["scripts/**/*.{js,cjs,mjs}", "tests/**/*.{js,cjs,mjs}"],
+    languageOptions: {
+      globals: {
+        ...globals.node,
+      },
+    },
+  },
+  {
     files: ["src/legacy/**/*"],
     rules: {
       "no-unused-vars": "off",

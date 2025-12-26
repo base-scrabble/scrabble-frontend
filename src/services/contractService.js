@@ -19,7 +19,7 @@ function getProvider() {
         : injected;
       return new ethers.BrowserProvider(picked);
     }
-  } catch (e) {
+  } catch {
     // fallthrough to RPC provider
   }
   if (!RPC) {
@@ -38,7 +38,7 @@ function getSigner() {
       const provider = new ethers.BrowserProvider(picked);
       return provider.getSigner();
     }
-  } catch (e) {
+  } catch {
     console.warn('No injected provider available for signer');
   }
   return null;
