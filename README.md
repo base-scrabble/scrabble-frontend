@@ -1,112 +1,78 @@
-# 🧠 Base Scrabble Frontend
+# Base Scrabble Frontend
 
-Welcome to the official frontend of **Base Scrabble** — a multiplayer, onchain word game built on the **Base chain**, where players compete in timed rounds, earn NFTs, and climb the leaderboard.
+React + Vite frontend for Base Scrabble (Pama Global Labs).
 
----
+## Current status
+- Base Scrabble is live and includes a working waitlist.
+- Free-to-play gameplay exists and is live.
+- Staked mode is **not enabled** yet.
+- Privy + Paymaster integration is planned/in progress (not production).
+- The app is live as a Base App + Farcaster Mini App.
 
-## 🔧 Tech Stack
+## Tech
+- React (Vite)
+- Tailwind CSS
+- Socket.IO client
+- Mini app embed support: `@farcaster/miniapp-sdk`
 
-| Layer       | Tech               |
-|-------------|--------------------|
-| Frontend    | React + TailwindCSS |
-| State Mgmt  | Zustand (or Redux) |
-| Backend     | Node.js + Express (API) |
-| Blockchain  | Solidity on Base L2 |
-| Wallets     | MetaMask, TBA (Base Wallet) |
-| Real-time   | Socket.io          |
-| Storage     | PostgreSQL or MySQL |
-| CMS/Admin   | Integrated inside this frontend |
+## Local development
 
----
+### Prerequisites
+- Node.js (recommended: Node 22.x)
+- npm
 
-## 📁 Folder Structure
-
-```
-scrabble-frontend/
-├── public/                 # HTML entry point
-├── src/
-│   ├── assets/             # Icons, badge images
-│   ├── components/         # Reusable UI elements
-│   ├── pages/              # Main screens (Game, Profile, Home)
-│   ├── hooks/              # Custom hooks (game logic, socket)
-│   ├── layouts/            # Layout wrappers
-│   ├── routes/             # Routing config
-│   ├── services/           # API/auth/socket clients
-│   ├── store/              # Zustand or Redux state
-│   ├── utils/              # Helpers: validator, contract calls
-│   ├── abi/                # ABI files for contracts
-│   ├── App.jsx             # App root component
-│   ├── index.js            # Entry point
-│   └── config.js           # App configs and constants
-├── .env                    # Local environment variables
-├── tailwind.config.js      # Tailwind CSS config
-├── package.json            # Project dependencies
-└── README.md               # This file
-```
-
----
-
-## 🚀 Getting Started
-
-1. **Clone the repository**
-
+### Install
 ```bash
-git clone https://github.com/base-scrabble/scrabble-frontend.git
 cd scrabble-frontend
-```
-
-2. **Install dependencies**
-
-```bash
 npm install
 ```
 
-3. **Create a `.env` file**
+### Configure environment
+Create `scrabble-frontend/.env.local` (recommended) and set only what you need.
 
-At the project root:
+Common variables:
+```dotenv
+# Backend/API (production)
+VITE_API_BASE_URL=https://YOUR_BACKEND_HOST/api
+VITE_BACKEND_URL=https://YOUR_BACKEND_HOST
+VITE_SOCKET_URL=https://YOUR_BACKEND_HOST
 
-```env
-VITE_BACKEND_URL=http://localhost:4000
-VITE_CONTRACT_ADDRESS=0xYourGameContractAddress
-VITE_NFT_CONTRACT_ADDRESS=0xYourNFTContractAddress
+# Waitlist mode
+# - "local": frontend-only join (default)
+# - "backend": uses backend endpoints when VITE_API_BASE_URL is a full https URL
+VITE_WAITLIST_MODE=local
+
+# Chain / RPC (used by wallet/onchain helpers)
+VITE_CHAIN_ID=84532
+VITE_RPC_URL=https://YOUR_RPC_HTTP
+VITE_RPC_WSS_URL=wss://YOUR_RPC_WSS
+
+# Contract addresses (Base Sepolia / Base Mainnet depending on env)
+VITE_ACCESS_MANAGER_ADDRESS=0x0000000000000000000000000000000000000000
+VITE_SCRABBLE_GAME_ADDRESS=0x0000000000000000000000000000000000000000
+VITE_WALLET_ADDRESS=0x0000000000000000000000000000000000000000
+
+# Planned (not production)
+VITE_PRIVY_APP_ID=YOUR_PRIVY_APP_ID
+VITE_PUBLIC_PAYMASTER_AND_BUNDLER_ENDPOINT=YOUR_PAYMASTER_ENDPOINT
 ```
 
-> Replace the contract addresses and URL with your actual deployed values.
+### Run
+This frontend is configured to proxy `/api` and `/socket.io` to `http://localhost:8000` in development.
 
-4. **Run the development server**
-
+Run the backend locally on port `8000`, then:
 ```bash
 npm run dev
 ```
 
----
-
-## 🧩 Game Features
-
-- ✅ Multiplayer word rounds (2–4 players)
-- ✅ Based on Base chain smart contracts
-- ✅ Timed or untimed game modes
-- ✅ Staking and reward distribution (ETH/USDC)
-- ✅ NFT badge rewards for wins
-- ✅ Leaderboard with player classes
-- ✅ Emoji reactions and optional in-game chat
-- ✅ Admin CMS for owner control
-- ✅ Tournament system (auto & manual)
-
----
-
-## 📦 Deployment
-
-For production:
-
+## Deployment
 ```bash
 npm run build
+npm run preview
 ```
 
----
-
-## 💬 Maintainers
-
-Built and maintained by the **Base Scrabble Core Team**.
-
-> Questions? Bug reports? Reach out via the team repo or Farcaster.
+## DO NOT (important)
+- Do not push changes without explicit approval.
+- Do not commit `.env` files or any private keys.
+- Do not change gameplay logic without explicit go-ahead.
+- Do not introduce staking, Privy flows, Paymaster usage, or tournament logic in the frontend without approval.
