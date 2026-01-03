@@ -306,6 +306,21 @@ export default function PlayGame({ gameId, gameData, setGameData, playerName, on
     setError('');
     setLoading(true);
 
+    const isLikelyNetworkError = (err) => {
+      if (!err) return false;
+      if (!err.response) {
+        const msg = String(err.message || '').toLowerCase();
+        const code = String(err.code || '').toLowerCase();
+        return (
+          msg.includes('network') ||
+          msg.includes('timeout') ||
+          code.includes('err_network') ||
+          code.includes('econnaborted')
+        );
+      }
+      return false;
+    };
+
     const attemptMove = async (attempt = 1) => {
       try {
         const response = await recordMove(gameId, activePlayer, move);
@@ -314,13 +329,25 @@ export default function PlayGame({ gameId, gameData, setGameData, playerName, on
         return true;
       } catch (err) {
         const status = err?.response?.status;
-        const shouldRetry = attempt === 1 && (!status || status >= 500);
+        const networkError = isLikelyNetworkError(err);
+        const shouldRetry = attempt === 1 && (networkError || !status || status >= 500);
         console.error(`❌ Move failed (attempt ${attempt})`, err);
         if (shouldRetry) {
           console.warn('🔄 Retrying move once after transient error...');
           await new Promise((resolve) => setTimeout(resolve, 400));
           return attemptMove(attempt + 1);
         }
+
+        if (networkError) {
+          setConnectionStatus('reconnecting');
+          setConnectionMessage('Network issue detected. Syncing game state…');
+          scheduleFallbackPolling();
+          // Best-effort: pull latest state so UI doesn't get stuck.
+          fetchLatestState('submit-network-error');
+          setError('Network error while submitting. Your move may not have been received — please retry after sync.');
+          return false;
+        }
+
         const message = err?.response?.data?.message || err?.message || 'Move failed';
         setError(message);
         return false;

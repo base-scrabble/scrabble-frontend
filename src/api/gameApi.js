@@ -7,6 +7,7 @@ import { withApiRetry } from '../utils/retry';
 const client = axios.create({
   baseURL: API_BASE_URL,
   withCredentials: true,
+  timeout: 20000,
 });
 
 const unwrap = (res) => res?.data?.data ?? res?.data ?? res;
