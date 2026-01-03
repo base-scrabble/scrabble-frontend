@@ -5,7 +5,7 @@
   padding-inline: 0.55rem !important; /* increased from 0.35rem */
   width: 100% !important;
   max-width: 100% !important;
-  overflow: hidden !important;
+  overflow: visible !important;
   margin: 0 auto !important;
 }
 
@@ -14,9 +14,10 @@
     --board-width-limit: calc(100vw - 1.2rem) !important; /* more breathing room */
     --board-size: var(--board-width-limit) !important;
 
-    width: var(--board-size) !important;
-    height: var(--board-size) !important;
-    max-width: 100% !important;
+    width: 100% !important;
+    height: auto !important;
+    max-width: 520px !important;
+    aspect-ratio: 1 / 1 !important;
 
     padding: 0.22rem !important;
     gap: 0.10rem !important; /* helps avoid edge clipping */
@@ -49,11 +50,12 @@
   width: 100% !important;
   max-width: 520px !important; /* matches board width */
   margin: 0 auto !important;
-  overflow-x: hidden !important; /* remove drifting */
+  overflow-x: auto !important;
   justify-content: center !important;
   flex-wrap: nowrap !important;
   padding-bottom: 0.4rem !important;
-  touch-action: none !important; /* stops dragging from sliding wrapper */
+  -webkit-overflow-scrolling: touch !important;
+  touch-action: pan-x pan-y !important;
 }
 
 @media (max-width: 480px) {
@@ -74,7 +76,12 @@
   }
 
   .action-button,
-  button {
+  .btn-chip,
+  .btn-primary,
+  .btn-secondary,
+  .btn-ghost,
+  .btn-alert,
+  .btn-toggle {
     padding: 0.40rem 0.75rem !important;
     font-size: 0.78rem !important;
   }
@@ -86,10 +93,11 @@
 /* 1. FORCE BOARD TO FIT ANY SCREEN */
 @media (max-width: 480px) {
   .scrabble-board {
-    width: 95vw !important;
-    height: 95vw !important;
-    max-width: 95vw !important;
-    max-height: 95vw !important;
+    width: 100% !important;
+    height: auto !important;
+    max-width: 520px !important;
+    max-height: none !important;
+    aspect-ratio: 1 / 1 !important;
     margin: 0 auto !important;
     padding: 0.25rem !important;
     gap: 0.15rem !important; /* reduces 2.88px gap proportionally */
@@ -148,7 +156,12 @@
   }
 
   .action-button,
-  button {
+  .btn-chip,
+  .btn-primary,
+  .btn-secondary,
+  .btn-ghost,
+  .btn-alert,
+  .btn-toggle {
     padding: 0.45rem 0.85rem !important;
     font-size: 0.80rem !important;
   }
@@ -159,16 +172,16 @@
   max-width: 520px;
   margin: 0 auto;
   padding-inline: 0.25rem;
-  overflow: hidden;
+  overflow: visible;
   display: flex;
   justify-content: center;
 }
 
 .scrabble-board {
-  width: min(95vw, 520px);
-  height: min(95vw, 520px);
+  width: 100%;
+  height: auto;
   max-width: 520px;
-  max-height: 520px;
+  max-height: none;
   aspect-ratio: 1 / 1 !important;
   padding: 0.35rem !important;
   gap: 0.08rem !important;
@@ -192,8 +205,8 @@
 /* === MOBILE (≤480px) — tighter layout === */
 @media (max-width: 480px) {
   .scrabble-board {
-    width: 97vw !important;
-    height: 97vw !important;
+    width: 100% !important;
+    height: auto !important;
     padding: 0.25rem !important;
     gap: 0.06rem !important;
   }
@@ -1151,14 +1164,28 @@ nav .theme-toggle__thumb {
 
 @media (max-width: 640px) {
   .rack-actions {
-    flex-direction: column;
+    flex-direction: row;
+    justify-content: center;
+    flex-wrap: wrap;
     width: 100%;
+    gap: 0.5rem;
   }
 
   .rack-actions .btn-chip {
-    width: 100%;
+    flex: 0 0 auto;
+    width: auto;
     text-align: center;
+    padding: 0.32rem 0.6rem;
+    font-size: 0.62rem;
+    line-height: 1.1;
+    letter-spacing: 0.08em;
   }
+}
+
+/* Mobile rack should always be scrollable (7 slots), with clear touch behavior */
+.rack__wrapper {
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-x;
 }
 
 .tile {

@@ -10,6 +10,7 @@ import BlankTilePicker from "./BlankTilePicker";
 import { getSessionItem } from "../utils/session";
 import { extractGamePayload } from "../utils/gamePayload";
 import { cloneTile, createBlankTile, normalizeRack, normalizeTile, serializeTileLetter } from "../utils/tileUtils";
+import { SOCKET_URL } from "../config";
 
 export default function PlayGame({ gameId, gameData, setGameData, playerName, onExit }) {
   const [loading, setLoading] = useState(false);
@@ -26,6 +27,8 @@ export default function PlayGame({ gameId, gameData, setGameData, playerName, on
   const [lastSyncedAt, setLastSyncedAt] = useState(null);
   const exitHandledRef = useRef(false);
   const lastDisconnectReasonRef = useRef(null);
+  const fallbackPollRef = useRef(null);
+  const lastFallbackSyncAtRef = useRef(0);
 
   const markSynced = () => setLastSyncedAt(Date.now());
 
@@ -91,6 +94,23 @@ export default function PlayGame({ gameId, gameData, setGameData, playerName, on
     return false;
   };
 
+  const scheduleFallbackPolling = () => {
+    if (fallbackPollRef.current) return;
+    fallbackPollRef.current = setInterval(() => {
+      const now = Date.now();
+      if (now - lastFallbackSyncAtRef.current < 3500) return;
+      lastFallbackSyncAtRef.current = now;
+      fetchLatestState('fallback-poll');
+    }, 4500);
+  };
+
+  const stopFallbackPolling = () => {
+    if (fallbackPollRef.current) {
+      clearInterval(fallbackPollRef.current);
+      fallbackPollRef.current = null;
+    }
+  };
+
   useEffect(() => {
     if (!gameId) return;
     exitHandledRef.current = false;
@@ -108,14 +128,40 @@ export default function PlayGame({ gameId, gameData, setGameData, playerName, on
   }, [gameId, setGameData, playerName]);
 
   useEffect(() => {
+    // If user backgrounded the tab or OS paused timers, do a quick resync on return.
+    const handleFocus = () => {
+      fetchLatestState('focus');
+    };
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        fetchLatestState('visibility');
+      }
+    };
+    if (typeof window !== 'undefined') {
+      window.addEventListener('focus', handleFocus);
+    }
+    if (typeof document !== 'undefined') {
+      document.addEventListener('visibilitychange', handleVisibility);
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('focus', handleFocus);
+      }
+      if (typeof document !== 'undefined') {
+        document.removeEventListener('visibilitychange', handleVisibility);
+      }
+    };
+  }, [gameId]);
+
+  useEffect(() => {
     if (!gameId) return;
     
     // Get playerName from storage helper if not passed as prop
     const actualPlayerName = playerName || getSessionItem('playerName', 'Guest');
     
-    // In development, use undefined so Vite proxy handles socket.io
-    const socketUrl = import.meta.env.DEV ? undefined : import.meta.env.VITE_SOCKET_URL;
-    const socket = connectSocket(socketUrl);
+    // Dev: SOCKET_URL resolves to '' (same-origin) so Vite proxy handles /socket.io.
+    // Prod: SOCKET_URL resolves to explicit backend origin when configured.
+    const socket = connectSocket(SOCKET_URL);
     if (!socket) return;
     const manager = socket.io;
 
@@ -174,6 +220,7 @@ export default function PlayGame({ gameId, gameData, setGameData, playerName, on
       requestRoomJoin({ gameId, playerName: actualPlayerName }, 'socket-connect');
       setConnectionStatus('connected');
       setConnectionMessage('');
+      stopFallbackPolling();
       if (lastDisconnectReasonRef.current) {
         fetchLatestState('post-reconnect');
         lastDisconnectReasonRef.current = null;
@@ -188,11 +235,13 @@ export default function PlayGame({ gameId, gameData, setGameData, playerName, on
           ? 'Server requested a reconnect…'
           : 'Connection lost. Attempting to reconnect…'
       );
+      scheduleFallbackPolling();
     };
 
     const handleConnectError = (err) => {
       setConnectionStatus('reconnecting');
       setConnectionMessage(err?.message || 'Connection error, retrying…');
+      scheduleFallbackPolling();
     };
 
     const handleReconnectAttempt = (attempt) => {
@@ -203,6 +252,7 @@ export default function PlayGame({ gameId, gameData, setGameData, playerName, on
     const handleReconnectFailed = () => {
       setConnectionStatus('offline');
       setConnectionMessage('Unable to reach the game server.');
+      scheduleFallbackPolling();
     };
 
     socket.on("connect", handleConnect);
@@ -226,6 +276,7 @@ export default function PlayGame({ gameId, gameData, setGameData, playerName, on
     // NO POLLING - Socket events only!
 
     return () => {
+      stopFallbackPolling();
       socket.off("connect", handleConnect);
       socket.off("disconnect", handleDisconnect);
       socket.off("connect_error", handleConnectError);

@@ -4,6 +4,7 @@ import { getGameState, joinGame, startGame } from "../api/gameApi";
 import { connectSocket, getSocket } from "../services/socketService";
 import { getSessionItem } from "../utils/session";
 import { extractGamePayload, resolveGameId } from "../utils/gamePayload";
+import { SOCKET_URL } from "../config";
 
 const MIN_POLL_INTERVAL_MS = 4000;
 const MAX_POLL_INTERVAL_MS = 5000;
@@ -121,8 +122,7 @@ export default function WaitingRoom({ gameId, gameData, setGameData, onStart, on
     let mounted = true;
     const actualPlayerName = getSessionItem('playerName', 'Guest');
     const normalizedSelfName = (actualPlayerName || '').trim().toLowerCase();
-    const socketUrl = import.meta.env.DEV ? undefined : import.meta.env.VITE_SOCKET_URL;
-    const socket = connectSocket(socketUrl);
+    const socket = connectSocket(SOCKET_URL);
     if (!socket) return;
 
     const pollState = {

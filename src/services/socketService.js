@@ -23,18 +23,23 @@ const readStoredValue = (key) => {
 
 export function connectSocket(url) {
   if (!socket) {
-    const hostname = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
-    const targetUrl = url || `http://${hostname}:3000`;
-    console.log('🔌 Initializing socket connection...', `URL: ${targetUrl}`);
+    const isBrowser = typeof window !== 'undefined';
+    const normalizedUrl = typeof url === 'string' ? url.trim() : '';
+    // Dev: connect to same origin (Vite proxy forwards /socket.io to backend)
+    // Prod: prefer explicit VITE_SOCKET_URL (passed in via callers), otherwise same origin.
+    const targetUrl = normalizedUrl || (isBrowser ? window.location.origin : 'http://localhost:8000');
+    console.log('🔌 Initializing socket connection...', `URL: ${targetUrl || '(same-origin)'}`);
     
     const opts = {
-      transports: ['websocket'],
-      upgrade: false,
+      // Allow polling fallback for networks that block websockets
+      transports: ['polling', 'websocket'],
+      upgrade: true,
       autoConnect: false,
       reconnection: true,
       reconnectionAttempts: Infinity,
       reconnectionDelay: 1000,
       reconnectionDelayMax: 5000,
+      withCredentials: true,
     };
     
     socket = io(targetUrl, opts);
@@ -52,7 +57,7 @@ export function connectSocket(url) {
       console.error("❌ Full error object:", error);
     });
 
-    socket.on("reconnect", (attempt) => {
+    socket.io.on("reconnect", (attempt) => {
       console.log(`🔄 Socket reconnected after ${attempt} attempts`);
       const gameId = readStoredValue("currentGameId") || readStoredValue("gameId");
       const playerName = readStoredValue("playerName") || readStoredValue("playerId");
@@ -65,25 +70,9 @@ export function connectSocket(url) {
       console.log("🔌 Socket disconnected:", socket.id, "Reason:", reason);
     });
 
-    // Add transport-level diagnostic events
+    // Transport-level diagnostic events (keep lightweight)
     socket.io.on("error", (error) => {
       console.error("❌ Socket.IO engine error:", error);
-    });
-
-    socket.io.on("open", () => {
-      console.log("🔓 Socket.IO transport opened - handshake in progress");
-    });
-
-    socket.io.on("close", (reason) => {
-      console.log("🔒 Socket.IO transport closed:", reason);
-    });
-
-    socket.io.on("ping", () => {
-      console.log("🏓 Socket.IO ping received");
-    });
-
-    socket.io.on("packet", (packet) => {
-      console.log("📦 Socket.IO packet:", packet.type, packet.data);
     });
 
     console.log('🔌 Calling socket.connect()...');

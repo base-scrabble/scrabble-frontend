@@ -359,6 +359,15 @@ export default function Waitlist() {
 
   const progress = Math.min(100, Math.round((xp / nextTier) * 100));
 
+  const waitlistSteps = joined
+    ? [
+        { key: 'joined', label: 'Joined', state: 'done' },
+        { key: 'pending', label: 'Pending invite', state: 'current' },
+        { key: 'invited', label: 'Invited', state: 'locked' },
+        { key: 'active', label: 'Active', state: 'locked' },
+      ]
+    : null;
+
 
   return (
     <div className="max-w-xl mx-auto mt-8 p-6 bg-white dark:bg-gray-900/80 bg-opacity-80 backdrop-blur-xl rounded-xl shadow-xl flex flex-col gap-6 relative border border-gray-200 dark:border-gray-700">
@@ -392,6 +401,34 @@ export default function Waitlist() {
         </div>
         <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">Progress to next tier: {nextTier} XP</div>
       </div>
+
+      {/* Waitlist Status (frontend-only) */}
+      {waitlistSteps && (
+        <div className="mb-2">
+          <h3 className="font-bold mb-2 text-gray-800 dark:text-gray-200">Waitlist status</h3>
+          <ol className="grid grid-cols-4 gap-2 text-center">
+            {waitlistSteps.map((step, idx) => {
+              const isDone = step.state === 'done';
+              const isCurrent = step.state === 'current';
+              const pillClass = isDone
+                ? 'bg-green-600 text-white'
+                : isCurrent
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-200 text-gray-600 dark:bg-gray-800 dark:text-gray-300';
+
+              return (
+                <li key={step.key} className="flex flex-col items-center gap-1">
+                  <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-extrabold ${pillClass}`}>{idx + 1}</div>
+                  <div className={`text-[11px] leading-tight font-semibold ${isCurrent ? 'text-blue-700 dark:text-blue-300' : 'text-gray-700 dark:text-gray-300'}`}>{step.label}</div>
+                </li>
+              );
+            })}
+          </ol>
+          <div className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+            Current: <span className="font-semibold">Pending invite</span>
+          </div>
+        </div>
+      )}
 
       {/* Referral Info */}
       {joined && (
