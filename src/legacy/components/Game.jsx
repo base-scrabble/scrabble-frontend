@@ -1,7 +1,7 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { getSocket } from "../services/socketService";
-import { makeMove, skipTurn, endGame } from "../api/gameApi";
+import { endGame, makeMove, skipTurn } from "../api/gameApi";
 import ChatBox from "./ChatBox";
 import Controls from "./Controls";
 
@@ -40,6 +40,12 @@ export default function Game() {
   const me = players[0];
   const currentPlayer = players[currentIdx];
 
+  const meNameRef = useRef(me.name);
+
+  useEffect(() => {
+    meNameRef.current = me.name;
+  }, [me.name]);
+
   const emptyBoard = useMemo(
     () =>
       Array.from({ length: BOARD_SIZE }, () =>
@@ -60,10 +66,9 @@ export default function Game() {
     if (!gameId) return;
     const socket = getSocket();
 
-    socket.emit("join-game", { gameId, playerName: me.name });
+    socket.emit("join-game", { gameId, playerName: meNameRef.current });
 
     socket.on("game:state", (data) => {
-      if (data.boardState) setBoard(data.boardState);
       if (data.rack) setRack(data.rack);
       if (data.players) setPlayers(data.players);
       if (data.currentTurn !== undefined) setCurrentIdx(data.currentTurn);
@@ -84,6 +89,18 @@ export default function Game() {
     return () => socket.disconnect();
   }, [gameId]);
 
+  const nextTurn = useCallback(() => {
+    setPlacementBuffer([]);
+    setSelectedRackIdx(null);
+    setCurrentIdx((idx) => (idx + 1) % players.length);
+    setSecondsLeft(TURN_SECONDS);
+  }, [players.length]);
+
+  const handleAutoPass = useCallback(() => {
+    skipTurn(gameId, meNameRef.current);
+    nextTurn();
+  }, [gameId, nextTurn]);
+
   // === TIMER LOGIC ===
   useEffect(() => {
     if (phase !== "active" || currentIdx !== 0) return;
@@ -95,7 +112,7 @@ export default function Game() {
     if (secondsLeft <= 0) return handleAutoPass();
     const t = setTimeout(() => setSecondsLeft((s) => s - 1), 1000);
     return () => clearTimeout(t);
-  }, [phase, currentIdx, secondsLeft]);
+  }, [phase, currentIdx, secondsLeft, handleAutoPass]);
 
   // === GAME ACTIONS ===
   function startGame() {
@@ -104,21 +121,9 @@ export default function Game() {
     setSecondsLeft(TURN_SECONDS);
   }
 
-  function nextTurn() {
-    setPlacementBuffer([]);
-    setSelectedRackIdx(null);
-    setCurrentIdx((idx) => (idx + 1) % players.length);
-    setSecondsLeft(TURN_SECONDS);
-  }
-
-  function handleAutoPass() {
-    skipTurn(gameId, me.name);
-    nextTurn();
-  }
-
   function onSelectRackTile(idx) {
     if (phase !== "active" || currentIdx !== 0) return;
-    setSelectedRackIdx(idx === selectedRackIdx ? null : idx);
+    setSelectedRackIdx((prev) => (prev === idx ? null : idx));
   }
 
   function onClickBoardCell(r, c) {

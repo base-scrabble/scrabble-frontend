@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getGameState, joinGame, startGame } from "../api/gameApi";
-import { connectSocket, getSocket } from "../services/socketService";
+import { connectSocket, requestRoomJoin } from "../services/socketService";
 import { getSessionItem } from "../utils/session";
 import { extractGamePayload, resolveGameId } from "../utils/gamePayload";
 import { SOCKET_URL } from "../config";
@@ -80,7 +80,7 @@ export default function WaitingRoom({ gameId, gameData, setGameData, onStart, on
     navigate(`/game/${targetGameId}`);
   }, [resolvedGameId, navigate]);
 
-  const applyGamePayload = (raw, reason = 'update') => {
+  const applyGamePayload = useCallback((raw, reason = 'update') => {
     const payload = extractGamePayload(raw);
     if (!payload) {
       console.warn(`⚠️ No game payload available for reason: ${reason}`);
@@ -90,9 +90,7 @@ export default function WaitingRoom({ gameId, gameData, setGameData, onStart, on
     const payloadGameId = resolveGameId(payload, resolvedGameId || gameId);
     setPlayers(normalizedPlayers);
     setStatus(payload.status || 'waiting');
-    if (payload.gameCode || !gameCode) {
-      setGameCode(payload.gameCode || '');
-    }
+    setGameCode((prev) => (payload.gameCode ? payload.gameCode : prev || ''));
     if (typeof setGameData === 'function') {
       setGameData((prev) => ({
         ...(prev || {}),
@@ -102,7 +100,7 @@ export default function WaitingRoom({ gameId, gameData, setGameData, onStart, on
       }));
     }
     return payload;
-  };
+  }, [gameId, resolvedGameId, setGameData]);
 
   useEffect(() => {
     if (Array.isArray(gameData?.players)) {
@@ -299,7 +297,7 @@ export default function WaitingRoom({ gameId, gameData, setGameData, onStart, on
       if (!resolvedGameId || !actualPlayerName) return;
       console.log("🔌 Socket connected to game room:", resolvedGameId, "as", actualPlayerName);
       stopPolling('socket-connected');
-      socket.emit("game:join", { gameId: resolvedGameId, playerName: actualPlayerName });
+      requestRoomJoin({ gameId: resolvedGameId, playerName: actualPlayerName }, 'socket-connect');
     };
 
     socket.on("connect", handleConnect);
@@ -307,7 +305,6 @@ export default function WaitingRoom({ gameId, gameData, setGameData, onStart, on
       handleConnect();
     }
 
-    socket.on("player:joined", handlePlayerJoinEvent);
     socket.on("game:join", handlePlayerJoinEvent);
     socket.on("game:start", handleSocketStart);
     socket.on("game:state", handleSocketStart);
@@ -318,14 +315,13 @@ export default function WaitingRoom({ gameId, gameData, setGameData, onStart, on
       mounted = false;
       stopPolling('cleanup');
       socket.off("connect", handleConnect);
-      socket.off("player:joined", handlePlayerJoinEvent);
       socket.off("game:join", handlePlayerJoinEvent);
       socket.off("game:start", handleSocketStart);
       socket.off("game:state", handleSocketStart);
       socket.off("player:left", handlePlayerLeave);
       socket.off("game:leave", handlePlayerLeave);
     };
-  }, [resolvedGameId, navigateToGame]);
+  }, [resolvedGameId, navigateToGame, applyGamePayload]);
 
   useEffect(() => {
     if (status === 'active') {
@@ -348,7 +344,7 @@ export default function WaitingRoom({ gameId, gameData, setGameData, onStart, on
         throw new Error('Unable to sync game state after joining.');
       }
       if (onJoin) onJoin({ ...payload, playerName: storedName });
-      getSocket()?.emit("game:join", { gameId: resolvedGameId, playerName: storedName });
+      requestRoomJoin({ gameId: resolvedGameId, playerName: storedName }, 'http-join');
     } catch (err) {
       const message = err?.response?.data?.message || err?.message || 'Unable to join game';
       alert(`Error joining game: ${message}`);

@@ -1,5 +1,4 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { BrowserProvider } from "ethers";
 import {
   getSessionItem,
   setSessionItem,
@@ -50,6 +49,7 @@ export function WalletProvider({ children }) {
     }
     setLoading(true);
     try {
+      const { BrowserProvider } = await import("ethers");
       const provider = new BrowserProvider(window.ethereum);
       const accounts = await provider.send("eth_requestAccounts", []);
       handleAccountsChanged(accounts);

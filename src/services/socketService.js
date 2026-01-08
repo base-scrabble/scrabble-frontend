@@ -32,7 +32,7 @@ export function connectSocket(url) {
     
     const opts = {
       // Allow polling fallback for networks that block websockets
-      transports: ['polling', 'websocket'],
+      transports: ['websocket', 'polling'],
       upgrade: true,
       autoConnect: false,
       reconnection: true,

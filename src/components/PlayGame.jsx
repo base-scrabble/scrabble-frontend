@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { connectSocket, getSocket, requestRoomJoin } from "../services/socketService";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { connectSocket, requestRoomJoin } from "../services/socketService";
 import { getGameState, makeMove as recordMove } from "../api/gameApi";
 import Board from "./Board";
 import Rack from "./Rack";
@@ -30,24 +30,25 @@ export default function PlayGame({ gameId, gameData, setGameData, playerName, on
   const fallbackPollRef = useRef(null);
   const lastFallbackSyncAtRef = useRef(0);
 
-  const markSynced = () => setLastSyncedAt(Date.now());
+  const markSynced = useCallback(() => setLastSyncedAt(Date.now()), []);
 
-  const normalizePlayers = (arr, currentTurnValue) =>
+  const normalizePlayers = useCallback((arr, currentTurnValue) =>
     (arr || []).map((p) => ({
       name: p.name,
       score: p.score || 0,
       playerNumber: p.playerNumber,
       isActive: currentTurnValue && p.playerNumber === currentTurnValue,
-    }));
-  const normalizeBoard = (boardState) =>
+    })), []);
+
+  const normalizeBoard = useCallback((boardState) =>
     Array.isArray(boardState) && boardState.length === 15
       ? boardState
-      : Array.from({ length: 15 }, () => Array(15).fill(null));
+      : Array.from({ length: 15 }, () => Array(15).fill(null)), []);
   const formatCoordinate = (row, col) => {
     if (typeof row !== "number" || typeof col !== "number") return "";
     return `${String.fromCharCode(65 + row)}${col + 1}`;
   };
-  const applyGamePayload = (payload) => {
+  const applyGamePayload = useCallback((payload) => {
     if (!payload) return;
     const hasBoard = Array.isArray(payload.boardState);
     const hasPlayers = Array.isArray(payload.players);
@@ -77,9 +78,9 @@ export default function PlayGame({ gameId, gameData, setGameData, playerName, on
     setExchangeSelection([]);
     setPendingBlankSelection(null);
     markSynced();
-  };
+  }, [gameId, markSynced, normalizeBoard, normalizePlayers, setGameData]);
 
-  const fetchLatestState = async (reason = 'socket-fallback') => {
+  const fetchLatestState = useCallback(async (reason = 'socket-fallback') => {
     if (!gameId) return false;
     try {
       const response = await getGameState(gameId, playerName || getSessionItem('playerName'));
@@ -92,9 +93,9 @@ export default function PlayGame({ gameId, gameData, setGameData, playerName, on
       console.error(`❌ Failed to refresh game state (${reason}):`, err);
     }
     return false;
-  };
+  }, [applyGamePayload, gameId, playerName]);
 
-  const scheduleFallbackPolling = () => {
+  const scheduleFallbackPolling = useCallback(() => {
     if (fallbackPollRef.current) return;
     fallbackPollRef.current = setInterval(() => {
       const now = Date.now();
@@ -102,14 +103,14 @@ export default function PlayGame({ gameId, gameData, setGameData, playerName, on
       lastFallbackSyncAtRef.current = now;
       fetchLatestState('fallback-poll');
     }, 4500);
-  };
+  }, [fetchLatestState]);
 
-  const stopFallbackPolling = () => {
+  const stopFallbackPolling = useCallback(() => {
     if (fallbackPollRef.current) {
       clearInterval(fallbackPollRef.current);
       fallbackPollRef.current = null;
     }
-  };
+  }, []);
 
   useEffect(() => {
     if (!gameId) return;
@@ -125,7 +126,7 @@ export default function PlayGame({ gameId, gameData, setGameData, playerName, on
       }
     };
     hydrateGame();
-  }, [gameId, setGameData, playerName]);
+  }, [applyGamePayload, gameId, playerName]);
 
   useEffect(() => {
     // If user backgrounded the tab or OS paused timers, do a quick resync on return.
@@ -151,7 +152,7 @@ export default function PlayGame({ gameId, gameData, setGameData, playerName, on
         document.removeEventListener('visibilitychange', handleVisibility);
       }
     };
-  }, [gameId]);
+  }, [fetchLatestState, gameId]);
 
   useEffect(() => {
     if (!gameId) return;
@@ -291,7 +292,17 @@ export default function PlayGame({ gameId, gameData, setGameData, playerName, on
       socket.off("game:over", handleGameOver);
       // Don't disconnect - keep socket alive for other components
     };
-  }, [gameId, setGameData, playerName, onExit]);
+  }, [
+    applyGamePayload,
+    fetchLatestState,
+    gameId,
+    normalizePlayers,
+    onExit,
+    playerName,
+    scheduleFallbackPolling,
+    setGameData,
+    stopFallbackPolling,
+  ]);
 
   const submitMove = async (move) => {
     if (!gameId) {
@@ -548,7 +559,7 @@ export default function PlayGame({ gameId, gameData, setGameData, playerName, on
 
   const scoreboardPlayers = useMemo(
     () => normalizePlayers(gameData?.players, sidebarMeta.currentTurn),
-    [gameData?.players, sidebarMeta.currentTurn]
+    [gameData?.players, normalizePlayers, sidebarMeta.currentTurn]
   );
 
   const viewerName = playerName || getSessionItem('playerName', '');

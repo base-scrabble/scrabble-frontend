@@ -1,0 +1,23 @@
+diff --git a/node_modules/ox/_esm/core/Address.js b/node_modules/ox/_esm/core/Address.js
+index 4d56f2c..a303820 100644
+--- a/node_modules/ox/_esm/core/Address.js
++++ b/node_modules/ox/_esm/core/Address.js
+@@ -3,7 +3,7 @@ import * as Caches from './Caches.js';
+ import * as Errors from './Errors.js';
+ import * as Hash from './Hash.js';
+ import * as PublicKey from './PublicKey.js';
+-const addressRegex = /*#__PURE__*/ /^0x[a-fA-F0-9]{40}$/;
++const addressRegex = /^0x[a-fA-F0-9]{40}$/;
+ /**
+  * Asserts that the given value is a valid {@link ox#Address.Address}.
+  *
+diff --git a/node_modules/ox/_esm/core/Json.js b/node_modules/ox/_esm/core/Json.js
+index f5d3805..ee60b8f 100644
+--- a/node_modules/ox/_esm/core/Json.js
++++ b/node_modules/ox/_esm/core/Json.js
+@@ -1,4 +1,4 @@
+-const bigIntSuffix = /*#__PURE__*/ '#__bigint';
++const bigIntSuffix = '#__bigint';
+ /**
+  * Parses a JSON string, with support for `bigint`.
+  *

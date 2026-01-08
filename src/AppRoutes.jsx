@@ -1,5 +1,5 @@
 // src/AppRoutes.jsx
-import { useState, useEffect, useRef } from "react";
+import { Suspense, lazy, useEffect, useRef, useState } from "react";
 import {
   BrowserRouter,
   Routes,
@@ -23,8 +23,6 @@ import {
 import Layout from "./components/Layout";
 import CreateGame from "./components/CreateGame";
 import JoinGame from "./components/JoinGame";
-import WaitingRoom from "./components/WaitingRoom";
-import PlayGame from "./components/PlayGame";
 import { API_BASE_URL } from "./config";
 import { getSocket } from "./services/socketService";
 import {
@@ -35,8 +33,14 @@ import {
   setSessionJSON,
 } from "./utils/session";
 
-import Waitlist from "./pages/Waitlist";
-import Success from "./pages/Success";
+const WaitingRoom = lazy(() => import("./components/WaitingRoom"));
+const PlayGame = lazy(() => import("./components/PlayGame"));
+const Waitlist = lazy(() => import("./pages/Waitlist"));
+const Success = lazy(() => import("./pages/Success"));
+
+const PageFallback = ({ label = "Loading…" }) => (
+  <div className="p-4 text-slate-600">{label}</div>
+);
 
 export default function AppRoutes() {
   return (
@@ -257,13 +261,15 @@ function AppRoutesInner() {
         <Route
           path="/waiting/:gameId"
           element={
-            <WaitingRoomWrapper
-              gameData={gameData}
-              setGameData={setGameData}
-              onStart={handleStart}
-              onJoin={handleJoin}
-              onExit={clearGame}
-            />
+            <Suspense fallback={<PageFallback label="Loading room…" />}>
+              <WaitingRoomWrapper
+                gameData={gameData}
+                setGameData={setGameData}
+                onStart={handleStart}
+                onJoin={handleJoin}
+                onExit={clearGame}
+              />
+            </Suspense>
           }
         />
 
@@ -271,18 +277,34 @@ function AppRoutesInner() {
         <Route
           path="/game/:gameId"
           element={
-            <PlayGameWrapper
-              gameData={gameData}
-              setGameData={setGameData}
-              clearGame={clearGame}
-            />
+            <Suspense fallback={<PageFallback label="Loading game…" />}>
+              <PlayGameWrapper
+                gameData={gameData}
+                setGameData={setGameData}
+                clearGame={clearGame}
+              />
+            </Suspense>
           }
         />
 
 
         {/* Waitlist and Success pages */}
-        <Route path="/waitlist" element={<Waitlist />} />
-        <Route path="/waitlist/success" element={<Success />} />
+        <Route
+          path="/waitlist"
+          element={
+            <Suspense fallback={<PageFallback label="Loading…" />}>
+              <Waitlist />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/waitlist/success"
+          element={
+            <Suspense fallback={<PageFallback label="Loading…" />}>
+              <Success />
+            </Suspense>
+          }
+        />
 
         {/* Farcaster manifest is served from public/.well-known/farcaster.json by the host */}
 
