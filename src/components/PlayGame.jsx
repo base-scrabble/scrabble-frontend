@@ -86,6 +86,13 @@ export default function PlayGame({ gameId, gameData, setGameData, playerName, on
       const response = await getGameState(gameId, playerName || getSessionItem('playerName'));
       const payload = extractGamePayload(response);
       if (payload) {
+    console.debug('[socket] game:update received', {
+      gameId,
+      payloadGameId: payload?.gameId || payload?.id,
+      status: payload?.status,
+      currentTurn: payload?.currentTurn,
+      lastMoveType: payload?.lastMove?.type,
+    });
         applyGamePayload(payload);
         return true;
       }
@@ -93,6 +100,12 @@ export default function PlayGame({ gameId, gameData, setGameData, playerName, on
       console.error(`❌ Failed to refresh game state (${reason}):`, err);
     }
     return false;
+    console.debug('[socket] game:over received', {
+      gameId,
+      payloadGameId: payload?.gameId || payload?.id,
+      status: payload?.status,
+      winner: payload?.winner?.name || null,
+    });
   }, [applyGamePayload, gameId, playerName]);
 
   const scheduleFallbackPolling = useCallback(() => {

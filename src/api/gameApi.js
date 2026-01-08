@@ -12,6 +12,16 @@ const client = axios.create({
 
 const unwrap = (res) => res?.data?.data ?? res?.data ?? res;
 
+const newClientRequestId = () => {
+  try {
+    return typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+      ? crypto.randomUUID()
+      : `cid-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  } catch {
+    return `cid-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  }
+};
+
 const callGameplayApi = (requestFactory, meta) =>
   withApiRetry(async () => {
     const response = await requestFactory();
@@ -59,15 +69,79 @@ export async function getGameState(gameId, playerName) {
 }
 
 export async function makeMove(gameId, playerName, move) {
+  const clientRequestId = newClientRequestId();
+  const kind = move?.passed
+    ? 'pass'
+    : Array.isArray(move?.exchanged) && move.exchanged.length
+      ? 'exchange'
+      : Array.isArray(move?.placements) && move.placements.length
+        ? 'placement'
+        : 'unknown';
   return callGameplayApi(
-    () => client.post(`/gameplay/${encodeURIComponent(gameId)}/move`, { playerName, ...move }),
+    async () => {
+      console.debug('[gameplay] submit move → sending', {
+        clientRequestId,
+        gameId,
+        playerName,
+        kind,
+      });
+      try {
+        const response = await client.post(
+          `/gameplay/${encodeURIComponent(gameId)}/move`,
+          { playerName, ...move },
+          { headers: { 'X-Client-Request-Id': clientRequestId } },
+        );
+        console.debug('[gameplay] submit move → ok', {
+          clientRequestId,
+          gameId,
+          status: response?.status,
+          serverRequestId: response?.headers?.['x-request-id'] || null,
+        });
+        return response;
+      } catch (err) {
+        console.warn('[gameplay] submit move → failed', {
+          clientRequestId,
+          gameId,
+          status: err?.response?.status ?? null,
+          serverRequestId: err?.response?.headers?.['x-request-id'] || null,
+          message: err?.message,
+        });
+        throw err;
+      }
+    },
     { id: 'gameplay:move', attempts: 2 }
   );
 }
 
 export async function skipTurn(gameId, playerName) {
+  const clientRequestId = newClientRequestId();
   return callGameplayApi(
-    () => client.post(`/gameplay/${encodeURIComponent(gameId)}/skip`, { playerName }),
+    async () => {
+      console.debug('[gameplay] skip → sending', { clientRequestId, gameId, playerName });
+      try {
+        const response = await client.post(
+          `/gameplay/${encodeURIComponent(gameId)}/skip`,
+          { playerName },
+          { headers: { 'X-Client-Request-Id': clientRequestId } },
+        );
+        console.debug('[gameplay] skip → ok', {
+          clientRequestId,
+          gameId,
+          status: response?.status,
+          serverRequestId: response?.headers?.['x-request-id'] || null,
+        });
+        return response;
+      } catch (err) {
+        console.warn('[gameplay] skip → failed', {
+          clientRequestId,
+          gameId,
+          status: err?.response?.status ?? null,
+          serverRequestId: err?.response?.headers?.['x-request-id'] || null,
+          message: err?.message,
+        });
+        throw err;
+      }
+    },
     { id: 'gameplay:skip' }
   );
 }
