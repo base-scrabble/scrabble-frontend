@@ -6,7 +6,7 @@ import { withApiRetry } from '../utils/retry';
 // Use axios with credentials for game API calls
 const client = axios.create({
   baseURL: API_BASE_URL,
-  withCredentials: true,
+  withCredentials: false,
   timeout: 20000,
 });
 

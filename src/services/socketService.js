@@ -39,7 +39,7 @@ export function connectSocket(url) {
       reconnectionAttempts: Infinity,
       reconnectionDelay: 1000,
       reconnectionDelayMax: 5000,
-      withCredentials: true,
+      withCredentials: false,
     };
     
     socket = io(targetUrl, opts);

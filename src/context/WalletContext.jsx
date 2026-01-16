@@ -4,6 +4,7 @@ import {
   setSessionItem,
   removeSessionItem,
 } from "../utils/session";
+import { ENABLE_WALLET } from "../config";
 
 const WalletContext = createContext(null);
 
@@ -11,6 +12,20 @@ const ACCOUNT_KEY = "connectedWallet";
 const AUTOCONNECT_KEY = "walletAutoconnect";
 
 export function WalletProvider({ children }) {
+  if (!ENABLE_WALLET) {
+    const value = {
+      account: null,
+      loading: false,
+      connect: async () => {
+        throw new Error("Wallet is disabled for this build");
+      },
+      disconnect: () => {},
+      autoConnectEnabled: false,
+      toggleAutoConnect: () => {},
+    };
+    return <WalletContext.Provider value={value}>{children}</WalletContext.Provider>;
+  }
+
   const [account, setAccount] = useState(() => getSessionItem(ACCOUNT_KEY));
   const [loading, setLoading] = useState(false);
   const [autoConnectEnabled, setAutoConnectEnabled] = useState(

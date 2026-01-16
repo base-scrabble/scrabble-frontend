@@ -34,7 +34,7 @@ export default function Success() {
       setInviteLink(link);
 
       // Fetch referral count
-      fetch(`${API_BASE_URL}/api/users/referrals/${code}`)
+      fetch(`${API_BASE_URL}/users/referrals/${code}`)
         .then((res) => res.json())
         .then((data) => {
           if (data.success) setReferrals(data.referrals);

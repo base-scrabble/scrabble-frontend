@@ -6,9 +6,10 @@ const DEFAULT_WSS_RPC = 'wss://misty-proportionate-owl.base-sepolia.quiknode.pro
 // Backend (append /api so all fetch calls go through API routes)
 const isDev = import.meta.env.DEV;
 
-// In development use a relative path so Vite dev server proxy forwards to backend.
-// In production prefer the explicit API base URL (Koyeb) from env.
-const DEFAULT_KOYEB_API_BASE = 'https://leading-deer-base-scrabble-7f7c59ec.koyeb.app/api';
+// In development we usually use a relative path so Vite dev server proxy forwards to a local backend.
+// If a full https API base is provided via env, use it directly so dev can target Fly.
+// In production prefer an explicit API base URL from env (Fly by default).
+const DEFAULT_FLY_API_BASE = 'https://basescrabble-backend.fly.dev/api';
 
 function normalizeApiBase(input) {
   if (!input) return '';
@@ -21,10 +22,19 @@ function normalizeApiBase(input) {
 }
 
 export const API_BASE_URL = isDev
-  ? '/api'
-  : normalizeApiBase(import.meta.env.VITE_API_BASE_URL)
+  ? (() => {
+    const envApiBase =
+      normalizeApiBase(import.meta.env.VITE_API_BASE_URL)
+      || normalizeApiBase(import.meta.env.VITE_BACKEND_URL);
+    // If caller explicitly provides a full URL in dev, honor it.
+    if (envApiBase && /^https?:\/\//.test(envApiBase)) return envApiBase;
+    return '/api';
+  })()
+  : (
+    normalizeApiBase(import.meta.env.VITE_API_BASE_URL)
     || normalizeApiBase(import.meta.env.VITE_BACKEND_URL)
-    || DEFAULT_KOYEB_API_BASE;
+    || DEFAULT_FLY_API_BASE
+  );
 
 // WebSocket endpoint (defaults to same host as API base)
 export const SOCKET_URL =
@@ -32,6 +42,9 @@ export const SOCKET_URL =
 
 // Privy Configuration
 export const PRIVY_APP_ID = import.meta.env.VITE_PRIVY_APP_ID;
+
+// Feature flags
+export const ENABLE_WALLET = String(import.meta.env.VITE_ENABLE_WALLET || '').toLowerCase() === 'true';
 
 // Contract addresses (Base Sepolia)
 export const ACCESS_MANAGER_ADDRESS = import.meta.env.VITE_ACCESS_MANAGER_ADDRESS;
