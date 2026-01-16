@@ -3,6 +3,7 @@
 React + Vite frontend for Base Scrabble (Pama Global Labs).
 
 ## Current status
+
 - Base Scrabble is live and includes a working waitlist.
 - Free-to-play gameplay exists and is live.
 - Staked mode is **not enabled** yet.
@@ -10,6 +11,7 @@ React + Vite frontend for Base Scrabble (Pama Global Labs).
 - The app is live as a Base App + Farcaster Mini App.
 
 ## Tech
+
 - React (Vite)
 - Tailwind CSS
 - Socket.IO client
@@ -18,20 +20,24 @@ React + Vite frontend for Base Scrabble (Pama Global Labs).
 ## Local development
 
 ### Prerequisites
+
 - Node.js (recommended: Node 22.x)
 - npm
 
 ### Install
+
 ```bash
 cd scrabble-frontend
 npm install
 ```
 
 ### Configure environment
+
 Create `scrabble-frontend/.env.local` (recommended) and set only what you need.
 You can copy `scrabble-frontend/.env.example` as a starting point.
 
 Common variables:
+
 ```dotenv
 # Backend/API (production)
 VITE_API_BASE_URL=https://YOUR_BACKEND_HOST/api
@@ -61,20 +67,24 @@ VITE_PUBLIC_PAYMASTER_AND_BUNDLER_ENDPOINT=YOUR_PAYMASTER_ENDPOINT
 ```
 
 ### Run
+
 This frontend is configured to proxy `/api` and `/socket.io` to `http://localhost:8000` in development.
 
 Run the backend locally on port `8000`, then:
+
 ```bash
 npm run dev
 ```
 
 ## Deployment
+
 ```bash
 npm run build
 npm run preview
 ```
 
 ## DO NOT (important)
+
 - Do not push changes without explicit approval.
 - Do not commit `.env` files or any private keys.
 - Do not change gameplay logic without explicit go-ahead.
