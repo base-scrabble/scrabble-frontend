@@ -1,8 +1,9 @@
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { usePrivy } from "@privy-io/react-auth";
+import { getMe } from "../api/authApi";
 
 export default function PrivyButton() {
-  const { ready, authenticated, user, login, logout } = usePrivy();
+  const { ready, authenticated, user, getAccessToken, login, logout } = usePrivy();
 
   const label = useMemo(() => {
     if (!ready) return "Loading…";
@@ -14,6 +15,35 @@ export default function PrivyButton() {
 
     return email || phone || name || "Account";
   }, [ready, authenticated, user]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function run() {
+      if (!ready || !authenticated) return;
+      if (typeof getAccessToken !== 'function') return;
+
+      try {
+        const token = await getAccessToken();
+        const me = await getMe(token);
+        if (!cancelled) {
+          console.debug('[auth] /auth/me ok', me);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          console.warn('[auth] /auth/me failed', {
+            message: err?.message,
+            status: err?.response?.status,
+          });
+        }
+      }
+    }
+
+    run();
+    return () => {
+      cancelled = true;
+    };
+  }, [ready, authenticated, getAccessToken]);
 
   if (!ready) {
     return (

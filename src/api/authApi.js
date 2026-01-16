@@ -1,21 +1,20 @@
-import { API_BASE_URL } from "../config";
+import axios from 'axios';
+import { API_BASE_URL } from '../config';
 
-export async function register(username, email, password, address) {
-  const res = await fetch(`${API_BASE_URL}/auth/register`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ username, email, password, address }),
-  });
-  if (!res.ok) throw new Error((await res.json()).message || "Registration failed");
-  return res.json();
-}
+const client = axios.create({
+  baseURL: API_BASE_URL,
+  withCredentials: false,
+  timeout: 20000,
+});
 
-export async function login(username, password) {
-  const res = await fetch(`${API_BASE_URL}/auth/login`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ username, password }),
+const unwrap = (res) => res?.data?.data ?? res?.data ?? res;
+
+export async function getMe(privyAccessToken) {
+  if (!privyAccessToken) throw new Error('Missing Privy access token');
+  const response = await client.get('/auth/me', {
+    headers: {
+      Authorization: `Bearer ${privyAccessToken}`,
+    },
   });
-  if (!res.ok) throw new Error((await res.json()).message || "Login failed");
-  return res.json();
+  return unwrap(response);
 }
