@@ -2,7 +2,7 @@ import AppRoutes from "./AppRoutes";
 import { WalletProvider } from "./context/WalletContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import { PrivyProvider } from "@privy-io/react-auth";
-import { PRIVY_APP_ID } from "./config";
+import { ENABLE_WALLET, PRIVY_APP_ID } from "./config";
 
 export default function App() {
 	const app = (
@@ -19,14 +19,27 @@ export default function App() {
 		<PrivyProvider
 			appId={PRIVY_APP_ID}
 			config={{
-				loginMethods: ["email", "google", "twitter", "discord"],
+				loginMethods: ENABLE_WALLET
+					? ["email", "google", "twitter", "discord"]
+					: ["email", "google"],
 				appearance: {
 					theme: "dark",
 					accentColor: "#2563eb",
 				},
+				legal: {
+					termsAndConditionsUrl: `${window.location.origin}/terms`,
+					privacyPolicyUrl: `${window.location.origin}/privacy`,
+				},
 				// Identity-only beta: do not prompt for embedded wallets.
 				embeddedWallets: {
-					createOnLogin: "off",
+					ethereum: {
+						createOnLogin: "off",
+					},
+					solana: {
+						createOnLogin: "off",
+					},
+					// Force-hide wallet UIs unless we explicitly turn wallet mode on.
+					showWalletUIs: ENABLE_WALLET,
 				},
 			}}
 		>

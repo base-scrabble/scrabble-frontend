@@ -1,9 +1,43 @@
+import fs from 'node:fs'
+import path from 'node:path'
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
+function legalPagesPlugin() {
+  return {
+    name: 'legal-pages-dev',
+    configureServer(server) {
+      const publicDir = path.join(server.config.root, 'public')
+
+      server.middlewares.use((req, res, next) => {
+        const pathname = (req.url || '').split('?')[0]
+
+        const fileName =
+          pathname === '/terms' ? 'terms.html'
+            : pathname === '/privacy' ? 'privacy.html'
+              : null
+
+        if (!fileName) return next()
+
+        try {
+          const filePath = path.join(publicDir, fileName)
+          const html = fs.readFileSync(filePath, 'utf8')
+          res.statusCode = 200
+          res.setHeader('Content-Type', 'text/html; charset=utf-8')
+          res.end(html)
+        } catch (err) {
+          server.config.logger.error(`[legal-pages] Failed to read ${fileName}: ${err?.message || err}`)
+          res.statusCode = 500
+          res.end('Failed to load page')
+        }
+      })
+    },
+  }
+}
+
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react()],
+	plugins: [react(), legalPagesPlugin()],
   server: {
     host: true, // allow LAN + localhost
     port: 5173, // keep default port
