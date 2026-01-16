@@ -29,6 +29,7 @@ npm install
 
 ### Configure environment
 Create `scrabble-frontend/.env.local` (recommended) and set only what you need.
+You can copy `scrabble-frontend/.env.example` as a starting point.
 
 Common variables:
 ```dotenv
@@ -52,8 +53,10 @@ VITE_ACCESS_MANAGER_ADDRESS=0x0000000000000000000000000000000000000000
 VITE_SCRABBLE_GAME_ADDRESS=0x0000000000000000000000000000000000000000
 VITE_WALLET_ADDRESS=0x0000000000000000000000000000000000000000
 
-# Planned (not production)
+# Optional (identity-only)
 VITE_PRIVY_APP_ID=YOUR_PRIVY_APP_ID
+
+# Planned (not production)
 VITE_PUBLIC_PAYMASTER_AND_BUNDLER_ENDPOINT=YOUR_PAYMASTER_ENDPOINT
 ```
 
