@@ -4,6 +4,7 @@ import { getGameState, joinGame, startGame } from "../api/gameApi";
 import { connectSocket, requestRoomJoin } from "../services/socketService";
 import { getSessionItem } from "../utils/session";
 import { extractGamePayload, resolveGameId } from "../utils/gamePayload";
+import { timelineRecord } from "../utils/gameTimeline";
 import { SOCKET_URL } from "../config";
 
 const MIN_POLL_INTERVAL_MS = 4000;
@@ -122,6 +123,9 @@ export default function WaitingRoom({ gameId, gameData, setGameData, onStart, on
     const normalizedSelfName = (actualPlayerName || '').trim().toLowerCase();
     const socket = connectSocket(SOCKET_URL);
     if (!socket) return;
+
+    timelineRecord('waiting:mount', { gameId: resolvedGameId, playerName: actualPlayerName });
+    requestRoomJoin({ gameId: resolvedGameId, playerName: actualPlayerName }, 'waiting-mount');
 
     const pollState = {
       timeoutId: null,
@@ -267,6 +271,7 @@ export default function WaitingRoom({ gameId, gameData, setGameData, onStart, on
 
     const handleSocketStart = (data = {}) => {
       console.log("🎮 Received game:start event:", data);
+      timelineRecord('game:start', { gameId: data?.gameId || resolvedGameId, source: 'socket' });
       stopPolling('socket-start');
       const statusFromPayload = data.state || data.status;
       if (statusFromPayload !== 'active' && data.force !== true) {
@@ -281,6 +286,7 @@ export default function WaitingRoom({ gameId, gameData, setGameData, onStart, on
 
     const handlePlayerJoinEvent = (data) => {
       console.log('👥 Player joined event:', data);
+      timelineRecord('player:join', { gameId: resolvedGameId, playerName: data?.playerName });
       stopPolling('player-event');
       if (isSelfEvent(data)) {
         return;
@@ -290,20 +296,16 @@ export default function WaitingRoom({ gameId, gameData, setGameData, onStart, on
 
     const handlePlayerLeave = (data) => {
       console.log("🚪 Player left waiting room:", data?.playerName);
+      timelineRecord('player:left', { gameId: resolvedGameId, playerName: data?.playerName, phase: 'waiting' });
       syncOnceFromSocket('player-left');
     };
 
     const handleConnect = () => {
-      if (!resolvedGameId || !actualPlayerName) return;
-      console.log("🔌 Socket connected to game room:", resolvedGameId, "as", actualPlayerName);
       stopPolling('socket-connected');
-      requestRoomJoin({ gameId: resolvedGameId, playerName: actualPlayerName }, 'socket-connect');
+      timelineRecord('socket:connect', { gameId: resolvedGameId });
     };
 
     socket.on("connect", handleConnect);
-    if (socket.connected) {
-      handleConnect();
-    }
 
     socket.on("game:join", handlePlayerJoinEvent);
     socket.on("game:start", handleSocketStart);
@@ -320,6 +322,7 @@ export default function WaitingRoom({ gameId, gameData, setGameData, onStart, on
       socket.off("game:state", handleSocketStart);
       socket.off("player:left", handlePlayerLeave);
       socket.off("game:leave", handlePlayerLeave);
+      timelineRecord('waiting:unmount', { gameId: resolvedGameId, playerName: actualPlayerName });
     };
   }, [resolvedGameId, navigateToGame, applyGamePayload]);
 

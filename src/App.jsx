@@ -13,7 +13,17 @@ export default function App() {
 		</WalletProvider>
 	);
 
-	if (!PRIVY_APP_ID) return app;
+	const allowInsecurePrivy = String(import.meta.env.VITE_ALLOW_INSECURE_PRIVY || "").toLowerCase() === "true";
+	const isPrivySafeToInit = (() => {
+		if (typeof window === "undefined") return false;
+		const host = window.location?.hostname;
+		const localhost = host === "localhost" || host === "127.0.0.1";
+		return Boolean(window.isSecureContext || localhost || allowInsecurePrivy);
+	})();
+
+	// Privy often requires a secure context. In dev on LAN (http://<ip>:5173),
+	// mounting Privy can hard-fail and present as a blank/white screen on mobile.
+	if (!PRIVY_APP_ID || !isPrivySafeToInit) return app;
 
 	return (
 		<PrivyProvider

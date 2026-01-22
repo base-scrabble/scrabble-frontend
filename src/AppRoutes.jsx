@@ -32,6 +32,7 @@ import {
   getSessionJSON,
   setSessionJSON,
 } from "./utils/session";
+import { timelineRecord } from "./utils/gameTimeline";
 
 const WaitingRoom = lazy(() => import("./components/WaitingRoom"));
 const PlayGame = lazy(() => import("./components/PlayGame"));
@@ -70,6 +71,8 @@ function AppRoutesInner() {
   const handleCreate = (data = {}) => {
     if (!data) return;
 
+    timelineRecord('create:called', { hasData: Boolean(data), type: typeof data });
+
     // fallback: CreateGame passed playerName string only
     if (typeof data === "string") {
       setSessionItem('playerName', data);
@@ -84,6 +87,7 @@ function AppRoutesInner() {
     if (data.playerName) {
       setSessionItem('playerName', data.playerName);
       console.log('💾 Stored playerName in sessionStorage:', data.playerName);
+      timelineRecord('player:set', { playerName: data.playerName, source: 'create' });
     }
     setGameData((prev) => ({
       ...(prev || {}),
@@ -94,6 +98,7 @@ function AppRoutesInner() {
     if (data.gameId) {
       setSessionItem('currentGameId', data.gameId);
       console.log('💾 Stored gameId in sessionStorage:', data.gameId);
+      timelineRecord('game:set', { gameId: data.gameId, source: 'create' });
       navigate(`/waiting/${data.gameId}`);
     } else {
       // safety: if create returned no id, stay on page but show created data
@@ -105,6 +110,7 @@ function AppRoutesInner() {
   const handleJoin = (data) => {
     if (!data) return;
     console.log('🔵 handleJoin called with data:', data);
+    timelineRecord('join:called', { gameId: data?.gameId, playerName: data?.playerName });
     setGameData((prev) => ({
       ...(prev || {}),
       ...data,
@@ -113,10 +119,12 @@ function AppRoutesInner() {
     if (data.playerName) {
       setSessionItem('playerName', data.playerName);
       console.log('💾 Stored playerName in sessionStorage:', data.playerName);
+      timelineRecord('player:set', { playerName: data.playerName, source: 'join' });
     }
     if (data.gameId) {
       setSessionItem('currentGameId', data.gameId);
       console.log('💾 Stored gameId in sessionStorage:', data.gameId);
+      timelineRecord('game:set', { gameId: data.gameId, source: 'join' });
       navigate(`/waiting/${data.gameId}`);
     }
   };
@@ -149,6 +157,7 @@ function AppRoutesInner() {
     const player = storedPlayerName;
     
     console.log('🚪 clearGame - gameId:', gameId, 'player:', player);
+    timelineRecord('game:clear', { gameId, playerName: player });
     
     // Call backend to leave game if we have both
     try {
@@ -167,6 +176,7 @@ function AppRoutesInner() {
           console.log(`🚪 Leaving game ${gameId} as ${player}`);
           console.log(`🚪 Fetching URL: ${leaveUrl}`);
           console.log(`🚪 Request body:`, { playerName: player });
+          timelineRecord('game:leave:http', { gameId, playerName: player, url: leaveUrl });
           
           const response = await fetch(leaveUrl, {
             method: 'POST',
@@ -179,12 +189,15 @@ function AppRoutesInner() {
           if (response.ok) {
             const result = await response.json();
             console.log('✅ Successfully left game:', result);
+            timelineRecord('game:leave:ok', { gameId, playerName: player });
           } else {
             const error = await response.json();
             console.error('❌ Failed to leave game:', error);
+            timelineRecord('game:leave:fail', { gameId, playerName: player, status: response.status });
           }
         } catch (err) {
           console.error('❌ Error leaving game:', err);
+          timelineRecord('game:leave:error', { gameId, playerName: player, message: err?.message });
         }
       } else {
         console.warn('⚠️ Cannot leave game - missing gameId or playerName');

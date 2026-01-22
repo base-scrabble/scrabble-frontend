@@ -23,11 +23,19 @@ function normalizeApiBase(input) {
 
 export const API_BASE_URL = isDev
   ? (() => {
-    const envApiBase =
-      normalizeApiBase(import.meta.env.VITE_API_BASE_URL)
-      || normalizeApiBase(import.meta.env.VITE_BACKEND_URL);
-    // If caller explicitly provides a full URL in dev, honor it.
-    if (envApiBase && /^https?:\/\//.test(envApiBase)) return envApiBase;
+    // In dev, default to same-origin API so Vite can proxy to the local backend.
+    // This avoids CORS issues (especially on LAN/mobile) when .env contains production URLs.
+    const devExplicit = String(import.meta.env.VITE_DEV_USE_EXPLICIT_API || '').toLowerCase() === 'true';
+    const devApiBase = normalizeApiBase(import.meta.env.VITE_DEV_API_BASE_URL);
+    if (devApiBase && /^https?:\/\//.test(devApiBase)) return devApiBase;
+
+    if (devExplicit) {
+      const envApiBase =
+        normalizeApiBase(import.meta.env.VITE_API_BASE_URL)
+        || normalizeApiBase(import.meta.env.VITE_BACKEND_URL);
+      if (envApiBase && /^https?:\/\//.test(envApiBase)) return envApiBase;
+    }
+
     return '/api';
   })()
   : (

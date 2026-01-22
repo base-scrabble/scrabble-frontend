@@ -54,7 +54,6 @@
   justify-content: center !important;
   flex-wrap: nowrap !important;
   padding-bottom: 0.4rem !important;
-  -webkit-overflow-scrolling: touch !important;
   touch-action: pan-x pan-y !important;
 }
 
@@ -230,7 +229,6 @@
   flex-wrap: nowrap;
   gap: 0.4rem;
   overflow-x: auto;
-  scrollbar-width: none;
 }
 
 .rack__wrapper::-webkit-scrollbar {
@@ -558,6 +556,7 @@
     z-index: 40;
     padding: max(env(safe-area-inset-top, 0px), 0.35rem) 0 0.65rem;
     background: linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0));
+    -webkit-backdrop-filter: blur(12px);
     backdrop-filter: blur(12px);
   }
 
@@ -1184,7 +1183,6 @@ nav .theme-toggle__thumb {
 
 /* Mobile rack should always be scrollable (7 slots), with clear touch behavior */
 .rack__wrapper {
-  -webkit-overflow-scrolling: touch;
   touch-action: pan-x;
 }
 
@@ -1434,7 +1432,6 @@ nav .theme-toggle__thumb {
     border-radius: 14px;
     overflow-x: auto;
     overflow-y: hidden;
-    -webkit-overflow-scrolling: touch;
     flex-wrap: nowrap;
     justify-content: flex-start;
     gap: 0.35rem;
@@ -1573,6 +1570,7 @@ nav .theme-toggle__thumb {
   border-radius: 1rem;
   padding: 1rem 1.2rem;
   background: rgba(15, 23, 42, 0.6);
+  -webkit-backdrop-filter: blur(14px);
   backdrop-filter: blur(14px);
   position: relative;
 }
@@ -1665,6 +1663,7 @@ nav .theme-toggle__thumb {
   border-radius: 1.25rem;
   padding: 1rem;
   background: rgba(15, 23, 42, 0.55);
+  -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
 }
 

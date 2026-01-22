@@ -10,6 +10,7 @@ import BlankTilePicker from "./BlankTilePicker";
 import { getSessionItem } from "../utils/session";
 import { extractGamePayload } from "../utils/gamePayload";
 import { cloneTile, createBlankTile, normalizeRack, normalizeTile, serializeTileLetter } from "../utils/tileUtils";
+import { timelineRecord } from "../utils/gameTimeline";
 import { SOCKET_URL } from "../config";
 
 export default function PlayGame({ gameId, gameData, setGameData, playerName, onExit }) {
@@ -173,8 +174,12 @@ export default function PlayGame({ gameId, gameData, setGameData, playerName, on
     if (!socket) return;
     const manager = socket.io;
 
+    timelineRecord('play:mount', { gameId, playerName: actualPlayerName });
+    requestRoomJoin({ gameId, playerName: actualPlayerName }, 'play-mount');
+
     const handleUpdate = (data) => {
       console.log('🎮 Game state update received:', data);
+      timelineRecord('game:update', { gameId, source: 'socket' });
       const payload = extractGamePayload(data);
       const hasBoard = Array.isArray(payload?.boardState);
       const hasPlayers = Array.isArray(payload?.players);
@@ -188,6 +193,7 @@ export default function PlayGame({ gameId, gameData, setGameData, playerName, on
 
     const handleSocketMove = (data) => {
       console.log('🎯 Move received:', data);
+      timelineRecord('game:move', { gameId, source: 'socket' });
       const payload = extractGamePayload(data);
       const hasBoard = Array.isArray(payload?.boardState);
       if (payload && hasBoard) {
@@ -200,6 +206,7 @@ export default function PlayGame({ gameId, gameData, setGameData, playerName, on
     const handlePlayerLeave = (data) => {
       if (!data?.playerName) return;
       console.log('🚪 Player left:', data.playerName);
+      timelineRecord('player:left', { gameId, playerName: data.playerName, phase: 'play' });
       if (data.playerName === actualPlayerName) {
         // Ignore the echo of our own exit
         return;
@@ -212,6 +219,7 @@ export default function PlayGame({ gameId, gameData, setGameData, playerName, on
 
     const handleGameOver = (data) => {
       console.log('🏁 Game over:', data);
+      timelineRecord('game:over', { gameId: data?.gameId || gameId });
       setGameData(prev => ({
         ...prev,
         gameId: data.gameId || prev?.gameId || gameId,
@@ -223,9 +231,7 @@ export default function PlayGame({ gameId, gameData, setGameData, playerName, on
     };
 
     const handleConnect = () => {
-      if (!gameId || !actualPlayerName) return;
-      console.log('🔌 Socket connected to game room:', gameId, 'as', actualPlayerName);
-      requestRoomJoin({ gameId, playerName: actualPlayerName }, 'socket-connect');
+      timelineRecord('socket:connect', { gameId });
       setConnectionStatus('connected');
       setConnectionMessage('');
       stopFallbackPolling();
@@ -298,6 +304,7 @@ export default function PlayGame({ gameId, gameData, setGameData, playerName, on
       socket.off("game:leave", handlePlayerLeave);
       socket.off("game:over", handleGameOver);
       // Don't disconnect - keep socket alive for other components
+      timelineRecord('play:unmount', { gameId, playerName: actualPlayerName });
     };
   }, [
     applyGamePayload,

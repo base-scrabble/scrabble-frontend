@@ -12,27 +12,18 @@ const ACCOUNT_KEY = "connectedWallet";
 const AUTOCONNECT_KEY = "walletAutoconnect";
 
 export function WalletProvider({ children }) {
-  if (!ENABLE_WALLET) {
-    const value = {
-      account: null,
-      loading: false,
-      connect: async () => {
-        throw new Error("Wallet is disabled for this build");
-      },
-      disconnect: () => {},
-      autoConnectEnabled: false,
-      toggleAutoConnect: () => {},
-    };
-    return <WalletContext.Provider value={value}>{children}</WalletContext.Provider>;
-  }
+  const walletEnabled = ENABLE_WALLET;
 
-  const [account, setAccount] = useState(() => getSessionItem(ACCOUNT_KEY));
+  const [account, setAccount] = useState(() =>
+    walletEnabled ? getSessionItem(ACCOUNT_KEY) : null
+  );
   const [loading, setLoading] = useState(false);
-  const [autoConnectEnabled, setAutoConnectEnabled] = useState(
-    () => getSessionItem(AUTOCONNECT_KEY) === "enabled"
+  const [autoConnectEnabled, setAutoConnectEnabled] = useState(() =>
+    walletEnabled ? getSessionItem(AUTOCONNECT_KEY) === "enabled" : false
   );
 
   const handleAccountsChanged = useCallback((accounts = []) => {
+    if (!walletEnabled) return;
     const primary = accounts[0] || null;
     setAccount(primary);
     if (primary) {
@@ -40,25 +31,30 @@ export function WalletProvider({ children }) {
     } else {
       removeSessionItem(ACCOUNT_KEY);
     }
-  }, []);
+  }, [walletEnabled]);
 
   useEffect(() => {
+    if (!walletEnabled) return;
     if (!autoConnectEnabled || typeof window === "undefined" || !window.ethereum) return;
     window.ethereum
       .request({ method: "eth_accounts" })
       .then(handleAccountsChanged)
       .catch((err) => console.error("Auto-connect failed", err));
-  }, [autoConnectEnabled, handleAccountsChanged]);
+  }, [walletEnabled, autoConnectEnabled, handleAccountsChanged]);
 
   useEffect(() => {
+    if (!walletEnabled) return;
     if (typeof window === "undefined" || !window.ethereum) return;
     window.ethereum.on?.("accountsChanged", handleAccountsChanged);
     return () => {
       window.ethereum?.removeListener?.("accountsChanged", handleAccountsChanged);
     };
-  }, [handleAccountsChanged]);
+  }, [walletEnabled, handleAccountsChanged]);
 
   const connect = useCallback(async () => {
+    if (!walletEnabled) {
+      throw new Error("Wallet is disabled for this build");
+    }
     if (typeof window === "undefined" || !window.ethereum) {
       throw new Error("Wallet provider not available");
     }
@@ -71,30 +67,44 @@ export function WalletProvider({ children }) {
     } finally {
       setLoading(false);
     }
-  }, [handleAccountsChanged]);
+  }, [walletEnabled, handleAccountsChanged]);
 
   const disconnect = useCallback(() => {
+    if (!walletEnabled) return;
     setAccount(null);
     removeSessionItem(ACCOUNT_KEY);
     setAutoConnectEnabled(false);
     setSessionItem(AUTOCONNECT_KEY, "disabled");
-  }, []);
+  }, [walletEnabled]);
 
   const toggleAutoConnect = useCallback((enabled) => {
+    if (!walletEnabled) return;
     setAutoConnectEnabled(enabled);
     setSessionItem(AUTOCONNECT_KEY, enabled ? "enabled" : "disabled");
-  }, []);
+  }, [walletEnabled]);
 
   const value = useMemo(
-    () => ({
-      account,
-      loading,
-      connect,
-      disconnect,
-      autoConnectEnabled,
-      toggleAutoConnect,
-    }),
-    [account, loading, connect, disconnect, autoConnectEnabled, toggleAutoConnect]
+    () =>
+      walletEnabled
+        ? {
+            account,
+            loading,
+            connect,
+            disconnect,
+            autoConnectEnabled,
+            toggleAutoConnect,
+          }
+        : {
+            account: null,
+            loading: false,
+            connect: async () => {
+              throw new Error("Wallet is disabled for this build");
+            },
+            disconnect: () => {},
+            autoConnectEnabled: false,
+            toggleAutoConnect: () => {},
+          },
+    [walletEnabled, account, loading, connect, disconnect, autoConnectEnabled, toggleAutoConnect]
   );
 
   return <WalletContext.Provider value={value}>{children}</WalletContext.Provider>;

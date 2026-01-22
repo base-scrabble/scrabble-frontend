@@ -14,6 +14,15 @@ const DEFAULT_RETRY_OPTIONS = {
   jitter: 0.25,
 };
 
+function retryDebugEnabled() {
+  if (typeof window === 'undefined') return false;
+  try {
+    return window.localStorage?.getItem('scrabble:retryDebug') === '1';
+  } catch {
+    return false;
+  }
+}
+
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 function computeDelay(base, factor, attempt, maxDelay, jitter) {
@@ -54,12 +63,17 @@ export async function retryAsync(operation, options = {}) {
 
   let lastError;
   const label = endpoint || id || "retry-operation";
+  const verbose = retryDebugEnabled();
 
   for (let attempt = 1; attempt <= attempts; attempt += 1) {
     try {
-      console.debug(`[retry] ${label} → attempt ${attempt}/${attempts}`);
+      if (verbose) {
+        console.debug(`[retry] ${label} → attempt ${attempt}/${attempts}`);
+      }
       const result = await operation(attempt);
-      console.debug(`[retry] ${label} succeeded on attempt ${attempt}`);
+      if (verbose && attempt > 1) {
+        console.debug(`[retry] ${label} succeeded on attempt ${attempt}`);
+      }
       return result;
     } catch (error) {
       lastError = error;
@@ -67,19 +81,22 @@ export async function retryAsync(operation, options = {}) {
       const timeout = Boolean(error?.code && TRANSIENT_ERROR_CODES.has(error.code))
         || /timeout/i.test(error?.message || "");
       const allowRetry = attempt < attempts && shouldRetry(error);
-      console.warn(
-        `[retry] ${label} failed (attempt ${attempt}/${attempts})`,
-        {
-          status,
-          code: error?.code,
-          timeout,
-        }
-      );
+      if (verbose) {
+        console.warn(
+          `[retry] ${label} failed (attempt ${attempt}/${attempts})`,
+          {
+            status,
+            code: error?.code,
+            timeout,
+          }
+        );
+      }
       if (!allowRetry) {
         console.error(`[retry] ${label} retries exhausted`, {
           attempts,
           status,
           timeout,
+          message: error?.message,
         });
         throw error;
       }

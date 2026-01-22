@@ -2,6 +2,7 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.jsx'
+import { timelineInstallToWindow } from './utils/gameTimeline'
 
 const MINIAPP_READY_FLAG = '__baseScrabbleMiniAppReady__'
 
@@ -56,6 +57,8 @@ createRoot(document.getElementById('root')).render(
     <App />
   </StrictMode>
 )
+
+timelineInstallToWindow()
 
 if (typeof window !== 'undefined') {
   window.requestAnimationFrame(() => {
