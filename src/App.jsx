@@ -29,9 +29,9 @@ export default function App() {
 		<PrivyProvider
 			appId={PRIVY_APP_ID}
 			config={{
-				loginMethods: ENABLE_WALLET
-					? ["email", "google", "twitter", "discord"]
-					: ["email", "google"],
+				// Login methods are identity providers; wallet UX is controlled separately by ENABLE_WALLET.
+				// Include Farcaster + socials even in free-play mode.
+				loginMethods: ["email", "google", "twitter", "discord", "farcaster"],
 				appearance: {
 					theme: "dark",
 					accentColor: "#2563eb",

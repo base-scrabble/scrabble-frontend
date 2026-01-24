@@ -45,8 +45,6 @@ export function timelineDump({ includeDetails = true } = {}) {
     const detail = includeDetails ? ` ${safeJson(e.details)}` : '';
     return `${time}  ${e.type}${detail}`;
   });
-  // eslint-disable-next-line no-console
-  console.log(rows.join('\n') || '[timeline] (empty)');
   return rows;
 }
 

@@ -1,9 +1,10 @@
-import { useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { usePrivy } from "@privy-io/react-auth";
 import { getMe } from "../api/authApi";
 
 export default function PrivyButton() {
   const { ready, authenticated, user, getAccessToken, login, logout } = usePrivy();
+  const [loginError, setLoginError] = useState("");
 
   const label = useMemo(() => {
     if (!ready) return "Loading…";
@@ -45,6 +46,23 @@ export default function PrivyButton() {
     };
   }, [ready, authenticated, getAccessToken]);
 
+  const handleLogin = useCallback(async () => {
+    setLoginError("");
+    try {
+      // Privy can reject with 403 / "Origin not allowed" when the current
+      // hostname isn't whitelisted in the Privy dashboard.
+      await Promise.resolve(login());
+    } catch (err) {
+      const message = String(err?.message || err || "");
+      if (/origin not allowed/i.test(message)) {
+        const origin = typeof window !== 'undefined' ? window.location.origin : '';
+        setLoginError(`Login disabled: Privy does not allow this origin (${origin}).`);
+        return;
+      }
+      setLoginError(message || 'Login failed.');
+    }
+  }, [login]);
+
   if (!ready) {
     return (
       <button
@@ -59,13 +77,20 @@ export default function PrivyButton() {
 
   if (!authenticated) {
     return (
-      <button
-        type="button"
-        onClick={login}
-        className="px-3 py-1.5 rounded bg-white text-blue-700 text-sm font-semibold hover:bg-blue-50"
-      >
-        {label}
-      </button>
+      <div className="flex flex-col items-end gap-1">
+        <button
+          type="button"
+          onClick={handleLogin}
+          className="px-3 py-1.5 rounded bg-white text-blue-700 text-sm font-semibold hover:bg-blue-50"
+        >
+          {label}
+        </button>
+        {loginError ? (
+          <span className="max-w-[260px] text-right text-[11px] leading-tight text-white/90">
+            {loginError} You can still play free games without logging in.
+          </span>
+        ) : null}
+      </div>
     );
   }
 
